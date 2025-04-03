@@ -1,0 +1,2075 @@
+
+Open In Colab
+
+!git clone https://github.com/CarlosVaquero/BudgetBuddy/
+     
+Cloning into 'BudgetBuddy'...
+remote: Enumerating objects: 951, done.
+remote: Counting objects: 100% (951/951), done.
+remote: Compressing objects: 100% (883/883), done.
+remote: Total 951 (delta 84), reused 919 (delta 65), pack-reused 0 (from 0)
+Receiving objects: 100% (951/951), 3.45 MiB | 15.34 MiB/s, done.
+Resolving deltas: 100% (84/84), done.
+
+!pip install langchain_community
+!pip install langchain-google-genai
+!pip install langchain-chroma
+!pip install faiss-cpu
+!pip install -U langgraph
+!pip install html2text
+     
+Requirement already satisfied: langchain_community in /usr/local/lib/python3.11/dist-packages (0.3.20)
+Requirement already satisfied: langchain-core<1.0.0,>=0.3.45 in /usr/local/lib/python3.11/dist-packages (from langchain_community) (0.3.49)
+Requirement already satisfied: langchain<1.0.0,>=0.3.21 in /usr/local/lib/python3.11/dist-packages (from langchain_community) (0.3.21)
+Requirement already satisfied: SQLAlchemy<3,>=1.4 in /usr/local/lib/python3.11/dist-packages (from langchain_community) (2.0.40)
+Requirement already satisfied: requests<3,>=2 in /usr/local/lib/python3.11/dist-packages (from langchain_community) (2.32.3)
+Requirement already satisfied: PyYAML>=5.3 in /usr/local/lib/python3.11/dist-packages (from langchain_community) (6.0.2)
+Requirement already satisfied: aiohttp<4.0.0,>=3.8.3 in /usr/local/lib/python3.11/dist-packages (from langchain_community) (3.11.14)
+Requirement already satisfied: tenacity!=8.4.0,<10,>=8.1.0 in /usr/local/lib/python3.11/dist-packages (from langchain_community) (9.0.0)
+Requirement already satisfied: dataclasses-json<0.7,>=0.5.7 in /usr/local/lib/python3.11/dist-packages (from langchain_community) (0.6.7)
+Requirement already satisfied: pydantic-settings<3.0.0,>=2.4.0 in /usr/local/lib/python3.11/dist-packages (from langchain_community) (2.8.1)
+Requirement already satisfied: langsmith<0.4,>=0.1.125 in /usr/local/lib/python3.11/dist-packages (from langchain_community) (0.3.19)
+Requirement already satisfied: httpx-sse<1.0.0,>=0.4.0 in /usr/local/lib/python3.11/dist-packages (from langchain_community) (0.4.0)
+Requirement already satisfied: numpy<3,>=1.26.2 in /usr/local/lib/python3.11/dist-packages (from langchain_community) (1.26.4)
+Requirement already satisfied: aiohappyeyeballs>=2.3.0 in /usr/local/lib/python3.11/dist-packages (from aiohttp<4.0.0,>=3.8.3->langchain_community) (2.6.1)
+Requirement already satisfied: aiosignal>=1.1.2 in /usr/local/lib/python3.11/dist-packages (from aiohttp<4.0.0,>=3.8.3->langchain_community) (1.3.2)
+Requirement already satisfied: attrs>=17.3.0 in /usr/local/lib/python3.11/dist-packages (from aiohttp<4.0.0,>=3.8.3->langchain_community) (25.3.0)
+Requirement already satisfied: frozenlist>=1.1.1 in /usr/local/lib/python3.11/dist-packages (from aiohttp<4.0.0,>=3.8.3->langchain_community) (1.5.0)
+Requirement already satisfied: multidict<7.0,>=4.5 in /usr/local/lib/python3.11/dist-packages (from aiohttp<4.0.0,>=3.8.3->langchain_community) (6.2.0)
+Requirement already satisfied: propcache>=0.2.0 in /usr/local/lib/python3.11/dist-packages (from aiohttp<4.0.0,>=3.8.3->langchain_community) (0.3.1)
+Requirement already satisfied: yarl<2.0,>=1.17.0 in /usr/local/lib/python3.11/dist-packages (from aiohttp<4.0.0,>=3.8.3->langchain_community) (1.18.3)
+Requirement already satisfied: marshmallow<4.0.0,>=3.18.0 in /usr/local/lib/python3.11/dist-packages (from dataclasses-json<0.7,>=0.5.7->langchain_community) (3.26.1)
+Requirement already satisfied: typing-inspect<1,>=0.4.0 in /usr/local/lib/python3.11/dist-packages (from dataclasses-json<0.7,>=0.5.7->langchain_community) (0.9.0)
+Requirement already satisfied: langchain-text-splitters<1.0.0,>=0.3.7 in /usr/local/lib/python3.11/dist-packages (from langchain<1.0.0,>=0.3.21->langchain_community) (0.3.7)
+Requirement already satisfied: pydantic<3.0.0,>=2.7.4 in /usr/local/lib/python3.11/dist-packages (from langchain<1.0.0,>=0.3.21->langchain_community) (2.11.0)
+Requirement already satisfied: jsonpatch<2.0,>=1.33 in /usr/local/lib/python3.11/dist-packages (from langchain-core<1.0.0,>=0.3.45->langchain_community) (1.33)
+Requirement already satisfied: packaging<25,>=23.2 in /usr/local/lib/python3.11/dist-packages (from langchain-core<1.0.0,>=0.3.45->langchain_community) (24.2)
+Requirement already satisfied: typing-extensions>=4.7 in /usr/local/lib/python3.11/dist-packages (from langchain-core<1.0.0,>=0.3.45->langchain_community) (4.13.0)
+Requirement already satisfied: httpx<1,>=0.23.0 in /usr/local/lib/python3.11/dist-packages (from langsmith<0.4,>=0.1.125->langchain_community) (0.28.1)
+Requirement already satisfied: orjson<4.0.0,>=3.9.14 in /usr/local/lib/python3.11/dist-packages (from langsmith<0.4,>=0.1.125->langchain_community) (3.10.16)
+Requirement already satisfied: requests-toolbelt<2.0.0,>=1.0.0 in /usr/local/lib/python3.11/dist-packages (from langsmith<0.4,>=0.1.125->langchain_community) (1.0.0)
+Requirement already satisfied: zstandard<0.24.0,>=0.23.0 in /usr/local/lib/python3.11/dist-packages (from langsmith<0.4,>=0.1.125->langchain_community) (0.23.0)
+Requirement already satisfied: python-dotenv>=0.21.0 in /usr/local/lib/python3.11/dist-packages (from pydantic-settings<3.0.0,>=2.4.0->langchain_community) (1.1.0)
+Requirement already satisfied: charset-normalizer<4,>=2 in /usr/local/lib/python3.11/dist-packages (from requests<3,>=2->langchain_community) (3.4.1)
+Requirement already satisfied: idna<4,>=2.5 in /usr/local/lib/python3.11/dist-packages (from requests<3,>=2->langchain_community) (3.10)
+Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/local/lib/python3.11/dist-packages (from requests<3,>=2->langchain_community) (2.3.0)
+Requirement already satisfied: certifi>=2017.4.17 in /usr/local/lib/python3.11/dist-packages (from requests<3,>=2->langchain_community) (2025.1.31)
+Requirement already satisfied: greenlet>=1 in /usr/local/lib/python3.11/dist-packages (from SQLAlchemy<3,>=1.4->langchain_community) (3.1.1)
+Requirement already satisfied: anyio in /usr/local/lib/python3.11/dist-packages (from httpx<1,>=0.23.0->langsmith<0.4,>=0.1.125->langchain_community) (4.9.0)
+Requirement already satisfied: httpcore==1.* in /usr/local/lib/python3.11/dist-packages (from httpx<1,>=0.23.0->langsmith<0.4,>=0.1.125->langchain_community) (1.0.7)
+Requirement already satisfied: h11<0.15,>=0.13 in /usr/local/lib/python3.11/dist-packages (from httpcore==1.*->httpx<1,>=0.23.0->langsmith<0.4,>=0.1.125->langchain_community) (0.14.0)
+Requirement already satisfied: jsonpointer>=1.9 in /usr/local/lib/python3.11/dist-packages (from jsonpatch<2.0,>=1.33->langchain-core<1.0.0,>=0.3.45->langchain_community) (3.0.0)
+Requirement already satisfied: annotated-types>=0.6.0 in /usr/local/lib/python3.11/dist-packages (from pydantic<3.0.0,>=2.7.4->langchain<1.0.0,>=0.3.21->langchain_community) (0.7.0)
+Requirement already satisfied: pydantic-core==2.33.0 in /usr/local/lib/python3.11/dist-packages (from pydantic<3.0.0,>=2.7.4->langchain<1.0.0,>=0.3.21->langchain_community) (2.33.0)
+Requirement already satisfied: typing-inspection>=0.4.0 in /usr/local/lib/python3.11/dist-packages (from pydantic<3.0.0,>=2.7.4->langchain<1.0.0,>=0.3.21->langchain_community) (0.4.0)
+Requirement already satisfied: mypy-extensions>=0.3.0 in /usr/local/lib/python3.11/dist-packages (from typing-inspect<1,>=0.4.0->dataclasses-json<0.7,>=0.5.7->langchain_community) (1.0.0)
+Requirement already satisfied: sniffio>=1.1 in /usr/local/lib/python3.11/dist-packages (from anyio->httpx<1,>=0.23.0->langsmith<0.4,>=0.1.125->langchain_community) (1.3.1)
+Requirement already satisfied: langchain-google-genai in /usr/local/lib/python3.11/dist-packages (2.1.2)
+Requirement already satisfied: filetype<2.0.0,>=1.2.0 in /usr/local/lib/python3.11/dist-packages (from langchain-google-genai) (1.2.0)
+Requirement already satisfied: google-ai-generativelanguage<0.7.0,>=0.6.16 in /usr/local/lib/python3.11/dist-packages (from langchain-google-genai) (0.6.17)
+Requirement already satisfied: langchain-core<0.4.0,>=0.3.49 in /usr/local/lib/python3.11/dist-packages (from langchain-google-genai) (0.3.49)
+Requirement already satisfied: pydantic<3,>=2 in /usr/local/lib/python3.11/dist-packages (from langchain-google-genai) (2.11.0)
+Requirement already satisfied: google-api-core!=2.0.*,!=2.1.*,!=2.10.*,!=2.2.*,!=2.3.*,!=2.4.*,!=2.5.*,!=2.6.*,!=2.7.*,!=2.8.*,!=2.9.*,<3.0.0,>=1.34.1 in /usr/local/lib/python3.11/dist-packages (from google-api-core[grpc]!=2.0.*,!=2.1.*,!=2.10.*,!=2.2.*,!=2.3.*,!=2.4.*,!=2.5.*,!=2.6.*,!=2.7.*,!=2.8.*,!=2.9.*,<3.0.0,>=1.34.1->google-ai-generativelanguage<0.7.0,>=0.6.16->langchain-google-genai) (2.24.2)
+Requirement already satisfied: google-auth!=2.24.0,!=2.25.0,<3.0.0,>=2.14.1 in /usr/local/lib/python3.11/dist-packages (from google-ai-generativelanguage<0.7.0,>=0.6.16->langchain-google-genai) (2.38.0)
+Requirement already satisfied: proto-plus<2.0.0,>=1.22.3 in /usr/local/lib/python3.11/dist-packages (from google-ai-generativelanguage<0.7.0,>=0.6.16->langchain-google-genai) (1.26.1)
+Requirement already satisfied: protobuf!=4.21.0,!=4.21.1,!=4.21.2,!=4.21.3,!=4.21.4,!=4.21.5,<7.0.0,>=3.20.2 in /usr/local/lib/python3.11/dist-packages (from google-ai-generativelanguage<0.7.0,>=0.6.16->langchain-google-genai) (5.29.4)
+Requirement already satisfied: langsmith<0.4,>=0.1.125 in /usr/local/lib/python3.11/dist-packages (from langchain-core<0.4.0,>=0.3.49->langchain-google-genai) (0.3.19)
+Requirement already satisfied: tenacity!=8.4.0,<10.0.0,>=8.1.0 in /usr/local/lib/python3.11/dist-packages (from langchain-core<0.4.0,>=0.3.49->langchain-google-genai) (9.0.0)
+Requirement already satisfied: jsonpatch<2.0,>=1.33 in /usr/local/lib/python3.11/dist-packages (from langchain-core<0.4.0,>=0.3.49->langchain-google-genai) (1.33)
+Requirement already satisfied: PyYAML>=5.3 in /usr/local/lib/python3.11/dist-packages (from langchain-core<0.4.0,>=0.3.49->langchain-google-genai) (6.0.2)
+Requirement already satisfied: packaging<25,>=23.2 in /usr/local/lib/python3.11/dist-packages (from langchain-core<0.4.0,>=0.3.49->langchain-google-genai) (24.2)
+Requirement already satisfied: typing-extensions>=4.7 in /usr/local/lib/python3.11/dist-packages (from langchain-core<0.4.0,>=0.3.49->langchain-google-genai) (4.13.0)
+Requirement already satisfied: annotated-types>=0.6.0 in /usr/local/lib/python3.11/dist-packages (from pydantic<3,>=2->langchain-google-genai) (0.7.0)
+Requirement already satisfied: pydantic-core==2.33.0 in /usr/local/lib/python3.11/dist-packages (from pydantic<3,>=2->langchain-google-genai) (2.33.0)
+Requirement already satisfied: typing-inspection>=0.4.0 in /usr/local/lib/python3.11/dist-packages (from pydantic<3,>=2->langchain-google-genai) (0.4.0)
+Requirement already satisfied: googleapis-common-protos<2.0.0,>=1.56.2 in /usr/local/lib/python3.11/dist-packages (from google-api-core!=2.0.*,!=2.1.*,!=2.10.*,!=2.2.*,!=2.3.*,!=2.4.*,!=2.5.*,!=2.6.*,!=2.7.*,!=2.8.*,!=2.9.*,<3.0.0,>=1.34.1->google-api-core[grpc]!=2.0.*,!=2.1.*,!=2.10.*,!=2.2.*,!=2.3.*,!=2.4.*,!=2.5.*,!=2.6.*,!=2.7.*,!=2.8.*,!=2.9.*,<3.0.0,>=1.34.1->google-ai-generativelanguage<0.7.0,>=0.6.16->langchain-google-genai) (1.69.2)
+Requirement already satisfied: requests<3.0.0,>=2.18.0 in /usr/local/lib/python3.11/dist-packages (from google-api-core!=2.0.*,!=2.1.*,!=2.10.*,!=2.2.*,!=2.3.*,!=2.4.*,!=2.5.*,!=2.6.*,!=2.7.*,!=2.8.*,!=2.9.*,<3.0.0,>=1.34.1->google-api-core[grpc]!=2.0.*,!=2.1.*,!=2.10.*,!=2.2.*,!=2.3.*,!=2.4.*,!=2.5.*,!=2.6.*,!=2.7.*,!=2.8.*,!=2.9.*,<3.0.0,>=1.34.1->google-ai-generativelanguage<0.7.0,>=0.6.16->langchain-google-genai) (2.32.3)
+Requirement already satisfied: grpcio<2.0dev,>=1.33.2 in /usr/local/lib/python3.11/dist-packages (from google-api-core[grpc]!=2.0.*,!=2.1.*,!=2.10.*,!=2.2.*,!=2.3.*,!=2.4.*,!=2.5.*,!=2.6.*,!=2.7.*,!=2.8.*,!=2.9.*,<3.0.0,>=1.34.1->google-ai-generativelanguage<0.7.0,>=0.6.16->langchain-google-genai) (1.71.0)
+Requirement already satisfied: grpcio-status<2.0.dev0,>=1.33.2 in /usr/local/lib/python3.11/dist-packages (from google-api-core[grpc]!=2.0.*,!=2.1.*,!=2.10.*,!=2.2.*,!=2.3.*,!=2.4.*,!=2.5.*,!=2.6.*,!=2.7.*,!=2.8.*,!=2.9.*,<3.0.0,>=1.34.1->google-ai-generativelanguage<0.7.0,>=0.6.16->langchain-google-genai) (1.71.0)
+Requirement already satisfied: cachetools<6.0,>=2.0.0 in /usr/local/lib/python3.11/dist-packages (from google-auth!=2.24.0,!=2.25.0,<3.0.0,>=2.14.1->google-ai-generativelanguage<0.7.0,>=0.6.16->langchain-google-genai) (5.5.2)
+Requirement already satisfied: pyasn1-modules>=0.2.1 in /usr/local/lib/python3.11/dist-packages (from google-auth!=2.24.0,!=2.25.0,<3.0.0,>=2.14.1->google-ai-generativelanguage<0.7.0,>=0.6.16->langchain-google-genai) (0.4.2)
+Requirement already satisfied: rsa<5,>=3.1.4 in /usr/local/lib/python3.11/dist-packages (from google-auth!=2.24.0,!=2.25.0,<3.0.0,>=2.14.1->google-ai-generativelanguage<0.7.0,>=0.6.16->langchain-google-genai) (4.9)
+Requirement already satisfied: jsonpointer>=1.9 in /usr/local/lib/python3.11/dist-packages (from jsonpatch<2.0,>=1.33->langchain-core<0.4.0,>=0.3.49->langchain-google-genai) (3.0.0)
+Requirement already satisfied: httpx<1,>=0.23.0 in /usr/local/lib/python3.11/dist-packages (from langsmith<0.4,>=0.1.125->langchain-core<0.4.0,>=0.3.49->langchain-google-genai) (0.28.1)
+Requirement already satisfied: orjson<4.0.0,>=3.9.14 in /usr/local/lib/python3.11/dist-packages (from langsmith<0.4,>=0.1.125->langchain-core<0.4.0,>=0.3.49->langchain-google-genai) (3.10.16)
+Requirement already satisfied: requests-toolbelt<2.0.0,>=1.0.0 in /usr/local/lib/python3.11/dist-packages (from langsmith<0.4,>=0.1.125->langchain-core<0.4.0,>=0.3.49->langchain-google-genai) (1.0.0)
+Requirement already satisfied: zstandard<0.24.0,>=0.23.0 in /usr/local/lib/python3.11/dist-packages (from langsmith<0.4,>=0.1.125->langchain-core<0.4.0,>=0.3.49->langchain-google-genai) (0.23.0)
+Requirement already satisfied: anyio in /usr/local/lib/python3.11/dist-packages (from httpx<1,>=0.23.0->langsmith<0.4,>=0.1.125->langchain-core<0.4.0,>=0.3.49->langchain-google-genai) (4.9.0)
+Requirement already satisfied: certifi in /usr/local/lib/python3.11/dist-packages (from httpx<1,>=0.23.0->langsmith<0.4,>=0.1.125->langchain-core<0.4.0,>=0.3.49->langchain-google-genai) (2025.1.31)
+Requirement already satisfied: httpcore==1.* in /usr/local/lib/python3.11/dist-packages (from httpx<1,>=0.23.0->langsmith<0.4,>=0.1.125->langchain-core<0.4.0,>=0.3.49->langchain-google-genai) (1.0.7)
+Requirement already satisfied: idna in /usr/local/lib/python3.11/dist-packages (from httpx<1,>=0.23.0->langsmith<0.4,>=0.1.125->langchain-core<0.4.0,>=0.3.49->langchain-google-genai) (3.10)
+Requirement already satisfied: h11<0.15,>=0.13 in /usr/local/lib/python3.11/dist-packages (from httpcore==1.*->httpx<1,>=0.23.0->langsmith<0.4,>=0.1.125->langchain-core<0.4.0,>=0.3.49->langchain-google-genai) (0.14.0)
+Requirement already satisfied: pyasn1<0.7.0,>=0.6.1 in /usr/local/lib/python3.11/dist-packages (from pyasn1-modules>=0.2.1->google-auth!=2.24.0,!=2.25.0,<3.0.0,>=2.14.1->google-ai-generativelanguage<0.7.0,>=0.6.16->langchain-google-genai) (0.6.1)
+Requirement already satisfied: charset-normalizer<4,>=2 in /usr/local/lib/python3.11/dist-packages (from requests<3.0.0,>=2.18.0->google-api-core!=2.0.*,!=2.1.*,!=2.10.*,!=2.2.*,!=2.3.*,!=2.4.*,!=2.5.*,!=2.6.*,!=2.7.*,!=2.8.*,!=2.9.*,<3.0.0,>=1.34.1->google-api-core[grpc]!=2.0.*,!=2.1.*,!=2.10.*,!=2.2.*,!=2.3.*,!=2.4.*,!=2.5.*,!=2.6.*,!=2.7.*,!=2.8.*,!=2.9.*,<3.0.0,>=1.34.1->google-ai-generativelanguage<0.7.0,>=0.6.16->langchain-google-genai) (3.4.1)
+Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/local/lib/python3.11/dist-packages (from requests<3.0.0,>=2.18.0->google-api-core!=2.0.*,!=2.1.*,!=2.10.*,!=2.2.*,!=2.3.*,!=2.4.*,!=2.5.*,!=2.6.*,!=2.7.*,!=2.8.*,!=2.9.*,<3.0.0,>=1.34.1->google-api-core[grpc]!=2.0.*,!=2.1.*,!=2.10.*,!=2.2.*,!=2.3.*,!=2.4.*,!=2.5.*,!=2.6.*,!=2.7.*,!=2.8.*,!=2.9.*,<3.0.0,>=1.34.1->google-ai-generativelanguage<0.7.0,>=0.6.16->langchain-google-genai) (2.3.0)
+Requirement already satisfied: sniffio>=1.1 in /usr/local/lib/python3.11/dist-packages (from anyio->httpx<1,>=0.23.0->langsmith<0.4,>=0.1.125->langchain-core<0.4.0,>=0.3.49->langchain-google-genai) (1.3.1)
+Requirement already satisfied: langchain-chroma in /usr/local/lib/python3.11/dist-packages (0.2.2)
+Requirement already satisfied: langchain-core!=0.3.0,!=0.3.1,!=0.3.10,!=0.3.11,!=0.3.12,!=0.3.13,!=0.3.14,!=0.3.2,!=0.3.3,!=0.3.4,!=0.3.5,!=0.3.6,!=0.3.7,!=0.3.8,!=0.3.9,<0.4.0,>=0.2.43 in /usr/local/lib/python3.11/dist-packages (from langchain-chroma) (0.3.49)
+Requirement already satisfied: numpy<2.0.0,>=1.22.4 in /usr/local/lib/python3.11/dist-packages (from langchain-chroma) (1.26.4)
+Requirement already satisfied: chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0 in /usr/local/lib/python3.11/dist-packages (from langchain-chroma) (0.6.3)
+Requirement already satisfied: build>=1.0.3 in /usr/local/lib/python3.11/dist-packages (from chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (1.2.2.post1)
+Requirement already satisfied: pydantic>=1.9 in /usr/local/lib/python3.11/dist-packages (from chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (2.11.0)
+Requirement already satisfied: chroma-hnswlib==0.7.6 in /usr/local/lib/python3.11/dist-packages (from chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (0.7.6)
+Requirement already satisfied: fastapi>=0.95.2 in /usr/local/lib/python3.11/dist-packages (from chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (0.115.12)
+Requirement already satisfied: uvicorn>=0.18.3 in /usr/local/lib/python3.11/dist-packages (from uvicorn[standard]>=0.18.3->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (0.34.0)
+Requirement already satisfied: posthog>=2.4.0 in /usr/local/lib/python3.11/dist-packages (from chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (3.23.0)
+Requirement already satisfied: typing_extensions>=4.5.0 in /usr/local/lib/python3.11/dist-packages (from chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (4.13.0)
+Requirement already satisfied: onnxruntime>=1.14.1 in /usr/local/lib/python3.11/dist-packages (from chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (1.21.0)
+Requirement already satisfied: opentelemetry-api>=1.2.0 in /usr/local/lib/python3.11/dist-packages (from chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (1.31.1)
+Requirement already satisfied: opentelemetry-exporter-otlp-proto-grpc>=1.2.0 in /usr/local/lib/python3.11/dist-packages (from chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (1.31.1)
+Requirement already satisfied: opentelemetry-instrumentation-fastapi>=0.41b0 in /usr/local/lib/python3.11/dist-packages (from chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (0.52b1)
+Requirement already satisfied: opentelemetry-sdk>=1.2.0 in /usr/local/lib/python3.11/dist-packages (from chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (1.31.1)
+Requirement already satisfied: tokenizers>=0.13.2 in /usr/local/lib/python3.11/dist-packages (from chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (0.21.1)
+Requirement already satisfied: pypika>=0.48.9 in /usr/local/lib/python3.11/dist-packages (from chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (0.48.9)
+Requirement already satisfied: tqdm>=4.65.0 in /usr/local/lib/python3.11/dist-packages (from chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (4.67.1)
+Requirement already satisfied: overrides>=7.3.1 in /usr/local/lib/python3.11/dist-packages (from chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (7.7.0)
+Requirement already satisfied: importlib-resources in /usr/local/lib/python3.11/dist-packages (from chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (6.5.2)
+Requirement already satisfied: grpcio>=1.58.0 in /usr/local/lib/python3.11/dist-packages (from chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (1.71.0)
+Requirement already satisfied: bcrypt>=4.0.1 in /usr/local/lib/python3.11/dist-packages (from chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (4.3.0)
+Requirement already satisfied: typer>=0.9.0 in /usr/local/lib/python3.11/dist-packages (from chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (0.15.2)
+Requirement already satisfied: kubernetes>=28.1.0 in /usr/local/lib/python3.11/dist-packages (from chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (32.0.1)
+Requirement already satisfied: tenacity>=8.2.3 in /usr/local/lib/python3.11/dist-packages (from chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (9.0.0)
+Requirement already satisfied: PyYAML>=6.0.0 in /usr/local/lib/python3.11/dist-packages (from chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (6.0.2)
+Requirement already satisfied: mmh3>=4.0.1 in /usr/local/lib/python3.11/dist-packages (from chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (5.1.0)
+Requirement already satisfied: orjson>=3.9.12 in /usr/local/lib/python3.11/dist-packages (from chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (3.10.16)
+Requirement already satisfied: httpx>=0.27.0 in /usr/local/lib/python3.11/dist-packages (from chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (0.28.1)
+Requirement already satisfied: rich>=10.11.0 in /usr/local/lib/python3.11/dist-packages (from chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (13.9.4)
+Requirement already satisfied: langsmith<0.4,>=0.1.125 in /usr/local/lib/python3.11/dist-packages (from langchain-core!=0.3.0,!=0.3.1,!=0.3.10,!=0.3.11,!=0.3.12,!=0.3.13,!=0.3.14,!=0.3.2,!=0.3.3,!=0.3.4,!=0.3.5,!=0.3.6,!=0.3.7,!=0.3.8,!=0.3.9,<0.4.0,>=0.2.43->langchain-chroma) (0.3.19)
+Requirement already satisfied: jsonpatch<2.0,>=1.33 in /usr/local/lib/python3.11/dist-packages (from langchain-core!=0.3.0,!=0.3.1,!=0.3.10,!=0.3.11,!=0.3.12,!=0.3.13,!=0.3.14,!=0.3.2,!=0.3.3,!=0.3.4,!=0.3.5,!=0.3.6,!=0.3.7,!=0.3.8,!=0.3.9,<0.4.0,>=0.2.43->langchain-chroma) (1.33)
+Requirement already satisfied: packaging<25,>=23.2 in /usr/local/lib/python3.11/dist-packages (from langchain-core!=0.3.0,!=0.3.1,!=0.3.10,!=0.3.11,!=0.3.12,!=0.3.13,!=0.3.14,!=0.3.2,!=0.3.3,!=0.3.4,!=0.3.5,!=0.3.6,!=0.3.7,!=0.3.8,!=0.3.9,<0.4.0,>=0.2.43->langchain-chroma) (24.2)
+Requirement already satisfied: pyproject_hooks in /usr/local/lib/python3.11/dist-packages (from build>=1.0.3->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (1.2.0)
+Requirement already satisfied: starlette<0.47.0,>=0.40.0 in /usr/local/lib/python3.11/dist-packages (from fastapi>=0.95.2->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (0.46.1)
+Requirement already satisfied: anyio in /usr/local/lib/python3.11/dist-packages (from httpx>=0.27.0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (4.9.0)
+Requirement already satisfied: certifi in /usr/local/lib/python3.11/dist-packages (from httpx>=0.27.0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (2025.1.31)
+Requirement already satisfied: httpcore==1.* in /usr/local/lib/python3.11/dist-packages (from httpx>=0.27.0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (1.0.7)
+Requirement already satisfied: idna in /usr/local/lib/python3.11/dist-packages (from httpx>=0.27.0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (3.10)
+Requirement already satisfied: h11<0.15,>=0.13 in /usr/local/lib/python3.11/dist-packages (from httpcore==1.*->httpx>=0.27.0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (0.14.0)
+Requirement already satisfied: jsonpointer>=1.9 in /usr/local/lib/python3.11/dist-packages (from jsonpatch<2.0,>=1.33->langchain-core!=0.3.0,!=0.3.1,!=0.3.10,!=0.3.11,!=0.3.12,!=0.3.13,!=0.3.14,!=0.3.2,!=0.3.3,!=0.3.4,!=0.3.5,!=0.3.6,!=0.3.7,!=0.3.8,!=0.3.9,<0.4.0,>=0.2.43->langchain-chroma) (3.0.0)
+Requirement already satisfied: six>=1.9.0 in /usr/local/lib/python3.11/dist-packages (from kubernetes>=28.1.0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (1.17.0)
+Requirement already satisfied: python-dateutil>=2.5.3 in /usr/local/lib/python3.11/dist-packages (from kubernetes>=28.1.0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (2.8.2)
+Requirement already satisfied: google-auth>=1.0.1 in /usr/local/lib/python3.11/dist-packages (from kubernetes>=28.1.0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (2.38.0)
+Requirement already satisfied: websocket-client!=0.40.0,!=0.41.*,!=0.42.*,>=0.32.0 in /usr/local/lib/python3.11/dist-packages (from kubernetes>=28.1.0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (1.8.0)
+Requirement already satisfied: requests in /usr/local/lib/python3.11/dist-packages (from kubernetes>=28.1.0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (2.32.3)
+Requirement already satisfied: requests-oauthlib in /usr/local/lib/python3.11/dist-packages (from kubernetes>=28.1.0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (2.0.0)
+Requirement already satisfied: oauthlib>=3.2.2 in /usr/local/lib/python3.11/dist-packages (from kubernetes>=28.1.0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (3.2.2)
+Requirement already satisfied: urllib3>=1.24.2 in /usr/local/lib/python3.11/dist-packages (from kubernetes>=28.1.0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (2.3.0)
+Requirement already satisfied: durationpy>=0.7 in /usr/local/lib/python3.11/dist-packages (from kubernetes>=28.1.0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (0.9)
+Requirement already satisfied: requests-toolbelt<2.0.0,>=1.0.0 in /usr/local/lib/python3.11/dist-packages (from langsmith<0.4,>=0.1.125->langchain-core!=0.3.0,!=0.3.1,!=0.3.10,!=0.3.11,!=0.3.12,!=0.3.13,!=0.3.14,!=0.3.2,!=0.3.3,!=0.3.4,!=0.3.5,!=0.3.6,!=0.3.7,!=0.3.8,!=0.3.9,<0.4.0,>=0.2.43->langchain-chroma) (1.0.0)
+Requirement already satisfied: zstandard<0.24.0,>=0.23.0 in /usr/local/lib/python3.11/dist-packages (from langsmith<0.4,>=0.1.125->langchain-core!=0.3.0,!=0.3.1,!=0.3.10,!=0.3.11,!=0.3.12,!=0.3.13,!=0.3.14,!=0.3.2,!=0.3.3,!=0.3.4,!=0.3.5,!=0.3.6,!=0.3.7,!=0.3.8,!=0.3.9,<0.4.0,>=0.2.43->langchain-chroma) (0.23.0)
+Requirement already satisfied: coloredlogs in /usr/local/lib/python3.11/dist-packages (from onnxruntime>=1.14.1->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (15.0.1)
+Requirement already satisfied: flatbuffers in /usr/local/lib/python3.11/dist-packages (from onnxruntime>=1.14.1->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (25.2.10)
+Requirement already satisfied: protobuf in /usr/local/lib/python3.11/dist-packages (from onnxruntime>=1.14.1->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (5.29.4)
+Requirement already satisfied: sympy in /usr/local/lib/python3.11/dist-packages (from onnxruntime>=1.14.1->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (1.13.1)
+Requirement already satisfied: deprecated>=1.2.6 in /usr/local/lib/python3.11/dist-packages (from opentelemetry-api>=1.2.0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (1.2.18)
+Requirement already satisfied: importlib-metadata<8.7.0,>=6.0 in /usr/local/lib/python3.11/dist-packages (from opentelemetry-api>=1.2.0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (8.6.1)
+Requirement already satisfied: googleapis-common-protos~=1.52 in /usr/local/lib/python3.11/dist-packages (from opentelemetry-exporter-otlp-proto-grpc>=1.2.0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (1.69.2)
+Requirement already satisfied: opentelemetry-exporter-otlp-proto-common==1.31.1 in /usr/local/lib/python3.11/dist-packages (from opentelemetry-exporter-otlp-proto-grpc>=1.2.0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (1.31.1)
+Requirement already satisfied: opentelemetry-proto==1.31.1 in /usr/local/lib/python3.11/dist-packages (from opentelemetry-exporter-otlp-proto-grpc>=1.2.0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (1.31.1)
+Requirement already satisfied: opentelemetry-instrumentation-asgi==0.52b1 in /usr/local/lib/python3.11/dist-packages (from opentelemetry-instrumentation-fastapi>=0.41b0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (0.52b1)
+Requirement already satisfied: opentelemetry-instrumentation==0.52b1 in /usr/local/lib/python3.11/dist-packages (from opentelemetry-instrumentation-fastapi>=0.41b0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (0.52b1)
+Requirement already satisfied: opentelemetry-semantic-conventions==0.52b1 in /usr/local/lib/python3.11/dist-packages (from opentelemetry-instrumentation-fastapi>=0.41b0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (0.52b1)
+Requirement already satisfied: opentelemetry-util-http==0.52b1 in /usr/local/lib/python3.11/dist-packages (from opentelemetry-instrumentation-fastapi>=0.41b0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (0.52b1)
+Requirement already satisfied: wrapt<2.0.0,>=1.0.0 in /usr/local/lib/python3.11/dist-packages (from opentelemetry-instrumentation==0.52b1->opentelemetry-instrumentation-fastapi>=0.41b0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (1.17.2)
+Requirement already satisfied: asgiref~=3.0 in /usr/local/lib/python3.11/dist-packages (from opentelemetry-instrumentation-asgi==0.52b1->opentelemetry-instrumentation-fastapi>=0.41b0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (3.8.1)
+Requirement already satisfied: monotonic>=1.5 in /usr/local/lib/python3.11/dist-packages (from posthog>=2.4.0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (1.6)
+Requirement already satisfied: backoff>=1.10.0 in /usr/local/lib/python3.11/dist-packages (from posthog>=2.4.0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (2.2.1)
+Requirement already satisfied: distro>=1.5.0 in /usr/local/lib/python3.11/dist-packages (from posthog>=2.4.0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (1.9.0)
+Requirement already satisfied: annotated-types>=0.6.0 in /usr/local/lib/python3.11/dist-packages (from pydantic>=1.9->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (0.7.0)
+Requirement already satisfied: pydantic-core==2.33.0 in /usr/local/lib/python3.11/dist-packages (from pydantic>=1.9->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (2.33.0)
+Requirement already satisfied: typing-inspection>=0.4.0 in /usr/local/lib/python3.11/dist-packages (from pydantic>=1.9->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (0.4.0)
+Requirement already satisfied: markdown-it-py>=2.2.0 in /usr/local/lib/python3.11/dist-packages (from rich>=10.11.0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (3.0.0)
+Requirement already satisfied: pygments<3.0.0,>=2.13.0 in /usr/local/lib/python3.11/dist-packages (from rich>=10.11.0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (2.18.0)
+Requirement already satisfied: huggingface-hub<1.0,>=0.16.4 in /usr/local/lib/python3.11/dist-packages (from tokenizers>=0.13.2->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (0.29.3)
+Requirement already satisfied: click>=8.0.0 in /usr/local/lib/python3.11/dist-packages (from typer>=0.9.0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (8.1.8)
+Requirement already satisfied: shellingham>=1.3.0 in /usr/local/lib/python3.11/dist-packages (from typer>=0.9.0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (1.5.4)
+Requirement already satisfied: httptools>=0.6.3 in /usr/local/lib/python3.11/dist-packages (from uvicorn[standard]>=0.18.3->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (0.6.4)
+Requirement already satisfied: python-dotenv>=0.13 in /usr/local/lib/python3.11/dist-packages (from uvicorn[standard]>=0.18.3->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (1.1.0)
+Requirement already satisfied: uvloop!=0.15.0,!=0.15.1,>=0.14.0 in /usr/local/lib/python3.11/dist-packages (from uvicorn[standard]>=0.18.3->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (0.21.0)
+Requirement already satisfied: watchfiles>=0.13 in /usr/local/lib/python3.11/dist-packages (from uvicorn[standard]>=0.18.3->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (1.0.4)
+Requirement already satisfied: websockets>=10.4 in /usr/local/lib/python3.11/dist-packages (from uvicorn[standard]>=0.18.3->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (15.0.1)
+Requirement already satisfied: cachetools<6.0,>=2.0.0 in /usr/local/lib/python3.11/dist-packages (from google-auth>=1.0.1->kubernetes>=28.1.0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (5.5.2)
+Requirement already satisfied: pyasn1-modules>=0.2.1 in /usr/local/lib/python3.11/dist-packages (from google-auth>=1.0.1->kubernetes>=28.1.0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (0.4.2)
+Requirement already satisfied: rsa<5,>=3.1.4 in /usr/local/lib/python3.11/dist-packages (from google-auth>=1.0.1->kubernetes>=28.1.0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (4.9)
+Requirement already satisfied: filelock in /usr/local/lib/python3.11/dist-packages (from huggingface-hub<1.0,>=0.16.4->tokenizers>=0.13.2->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (3.18.0)
+Requirement already satisfied: fsspec>=2023.5.0 in /usr/local/lib/python3.11/dist-packages (from huggingface-hub<1.0,>=0.16.4->tokenizers>=0.13.2->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (2025.3.0)
+Requirement already satisfied: zipp>=3.20 in /usr/local/lib/python3.11/dist-packages (from importlib-metadata<8.7.0,>=6.0->opentelemetry-api>=1.2.0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (3.21.0)
+Requirement already satisfied: mdurl~=0.1 in /usr/local/lib/python3.11/dist-packages (from markdown-it-py>=2.2.0->rich>=10.11.0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (0.1.2)
+Requirement already satisfied: charset-normalizer<4,>=2 in /usr/local/lib/python3.11/dist-packages (from requests->kubernetes>=28.1.0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (3.4.1)
+Requirement already satisfied: sniffio>=1.1 in /usr/local/lib/python3.11/dist-packages (from anyio->httpx>=0.27.0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (1.3.1)
+Requirement already satisfied: humanfriendly>=9.1 in /usr/local/lib/python3.11/dist-packages (from coloredlogs->onnxruntime>=1.14.1->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (10.0)
+Requirement already satisfied: mpmath<1.4,>=1.1.0 in /usr/local/lib/python3.11/dist-packages (from sympy->onnxruntime>=1.14.1->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (1.3.0)
+Requirement already satisfied: pyasn1<0.7.0,>=0.6.1 in /usr/local/lib/python3.11/dist-packages (from pyasn1-modules>=0.2.1->google-auth>=1.0.1->kubernetes>=28.1.0->chromadb!=0.5.10,!=0.5.11,!=0.5.12,!=0.5.4,!=0.5.5,!=0.5.7,!=0.5.9,<0.7.0,>=0.4.0->langchain-chroma) (0.6.1)
+Requirement already satisfied: faiss-cpu in /usr/local/lib/python3.11/dist-packages (1.10.0)
+Requirement already satisfied: numpy<3.0,>=1.25.0 in /usr/local/lib/python3.11/dist-packages (from faiss-cpu) (1.26.4)
+Requirement already satisfied: packaging in /usr/local/lib/python3.11/dist-packages (from faiss-cpu) (24.2)
+Requirement already satisfied: langgraph in /usr/local/lib/python3.11/dist-packages (0.3.24)
+Requirement already satisfied: langchain-core<0.4,>=0.1 in /usr/local/lib/python3.11/dist-packages (from langgraph) (0.3.49)
+Requirement already satisfied: langgraph-checkpoint<3.0.0,>=2.0.10 in /usr/local/lib/python3.11/dist-packages (from langgraph) (2.0.24)
+Requirement already satisfied: langgraph-prebuilt<0.2,>=0.1.1 in /usr/local/lib/python3.11/dist-packages (from langgraph) (0.1.7)
+Requirement already satisfied: langgraph-sdk<0.2.0,>=0.1.42 in /usr/local/lib/python3.11/dist-packages (from langgraph) (0.1.61)
+Requirement already satisfied: xxhash<4.0.0,>=3.5.0 in /usr/local/lib/python3.11/dist-packages (from langgraph) (3.5.0)
+Requirement already satisfied: langsmith<0.4,>=0.1.125 in /usr/local/lib/python3.11/dist-packages (from langchain-core<0.4,>=0.1->langgraph) (0.3.19)
+Requirement already satisfied: tenacity!=8.4.0,<10.0.0,>=8.1.0 in /usr/local/lib/python3.11/dist-packages (from langchain-core<0.4,>=0.1->langgraph) (9.0.0)
+Requirement already satisfied: jsonpatch<2.0,>=1.33 in /usr/local/lib/python3.11/dist-packages (from langchain-core<0.4,>=0.1->langgraph) (1.33)
+Requirement already satisfied: PyYAML>=5.3 in /usr/local/lib/python3.11/dist-packages (from langchain-core<0.4,>=0.1->langgraph) (6.0.2)
+Requirement already satisfied: packaging<25,>=23.2 in /usr/local/lib/python3.11/dist-packages (from langchain-core<0.4,>=0.1->langgraph) (24.2)
+Requirement already satisfied: typing-extensions>=4.7 in /usr/local/lib/python3.11/dist-packages (from langchain-core<0.4,>=0.1->langgraph) (4.13.0)
+Requirement already satisfied: pydantic<3.0.0,>=2.5.2 in /usr/local/lib/python3.11/dist-packages (from langchain-core<0.4,>=0.1->langgraph) (2.11.0)
+Requirement already satisfied: ormsgpack<2.0.0,>=1.8.0 in /usr/local/lib/python3.11/dist-packages (from langgraph-checkpoint<3.0.0,>=2.0.10->langgraph) (1.9.1)
+Requirement already satisfied: httpx>=0.25.2 in /usr/local/lib/python3.11/dist-packages (from langgraph-sdk<0.2.0,>=0.1.42->langgraph) (0.28.1)
+Requirement already satisfied: orjson>=3.10.1 in /usr/local/lib/python3.11/dist-packages (from langgraph-sdk<0.2.0,>=0.1.42->langgraph) (3.10.16)
+Requirement already satisfied: anyio in /usr/local/lib/python3.11/dist-packages (from httpx>=0.25.2->langgraph-sdk<0.2.0,>=0.1.42->langgraph) (4.9.0)
+Requirement already satisfied: certifi in /usr/local/lib/python3.11/dist-packages (from httpx>=0.25.2->langgraph-sdk<0.2.0,>=0.1.42->langgraph) (2025.1.31)
+Requirement already satisfied: httpcore==1.* in /usr/local/lib/python3.11/dist-packages (from httpx>=0.25.2->langgraph-sdk<0.2.0,>=0.1.42->langgraph) (1.0.7)
+Requirement already satisfied: idna in /usr/local/lib/python3.11/dist-packages (from httpx>=0.25.2->langgraph-sdk<0.2.0,>=0.1.42->langgraph) (3.10)
+Requirement already satisfied: h11<0.15,>=0.13 in /usr/local/lib/python3.11/dist-packages (from httpcore==1.*->httpx>=0.25.2->langgraph-sdk<0.2.0,>=0.1.42->langgraph) (0.14.0)
+Requirement already satisfied: jsonpointer>=1.9 in /usr/local/lib/python3.11/dist-packages (from jsonpatch<2.0,>=1.33->langchain-core<0.4,>=0.1->langgraph) (3.0.0)
+Requirement already satisfied: requests<3,>=2 in /usr/local/lib/python3.11/dist-packages (from langsmith<0.4,>=0.1.125->langchain-core<0.4,>=0.1->langgraph) (2.32.3)
+Requirement already satisfied: requests-toolbelt<2.0.0,>=1.0.0 in /usr/local/lib/python3.11/dist-packages (from langsmith<0.4,>=0.1.125->langchain-core<0.4,>=0.1->langgraph) (1.0.0)
+Requirement already satisfied: zstandard<0.24.0,>=0.23.0 in /usr/local/lib/python3.11/dist-packages (from langsmith<0.4,>=0.1.125->langchain-core<0.4,>=0.1->langgraph) (0.23.0)
+Requirement already satisfied: annotated-types>=0.6.0 in /usr/local/lib/python3.11/dist-packages (from pydantic<3.0.0,>=2.5.2->langchain-core<0.4,>=0.1->langgraph) (0.7.0)
+Requirement already satisfied: pydantic-core==2.33.0 in /usr/local/lib/python3.11/dist-packages (from pydantic<3.0.0,>=2.5.2->langchain-core<0.4,>=0.1->langgraph) (2.33.0)
+Requirement already satisfied: typing-inspection>=0.4.0 in /usr/local/lib/python3.11/dist-packages (from pydantic<3.0.0,>=2.5.2->langchain-core<0.4,>=0.1->langgraph) (0.4.0)
+Requirement already satisfied: charset-normalizer<4,>=2 in /usr/local/lib/python3.11/dist-packages (from requests<3,>=2->langsmith<0.4,>=0.1.125->langchain-core<0.4,>=0.1->langgraph) (3.4.1)
+Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/local/lib/python3.11/dist-packages (from requests<3,>=2->langsmith<0.4,>=0.1.125->langchain-core<0.4,>=0.1->langgraph) (2.3.0)
+Requirement already satisfied: sniffio>=1.1 in /usr/local/lib/python3.11/dist-packages (from anyio->httpx>=0.25.2->langgraph-sdk<0.2.0,>=0.1.42->langgraph) (1.3.1)
+Requirement already satisfied: html2text in /usr/local/lib/python3.11/dist-packages (2024.2.26)
+
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.prebuilt import create_react_agent
+from langchain.tools import BaseTool
+from langchain.tools.retriever import create_retriever_tool
+from langchain_chroma import Chroma
+from langchain_community.document_loaders import TextLoader, AsyncHtmlLoader
+from langchain_community.vectorstores import FAISS
+from langchain_community.tools.tavily_search import TavilySearchResults
+from langchain_community.document_transformers import Html2TextTransformer
+from langchain_core.messages import AnyMessage, SystemMessage, HumanMessage, ToolMessage, AIMessage, trim_messages
+from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
+from langchain_text_splitters import CharacterTextSplitter
+
+from pydantic import Field
+from bs4 import BeautifulSoup
+import re
+import time
+import getpass
+import textwrap
+import requests
+import random
+import os
+import getpass
+from IPython.display import Image, display, Markdown
+
+
+     
+WARNING:langchain_community.utils.user_agent:USER_AGENT environment variable not set, consider setting it to identify your requests.
+
+if "GOOGLE_API_KEY" not in os.environ:
+    os.environ['GOOGLE_API_KEY'] = getpass.getpass('Gemini API Key:')
+
+if "TAVILY_API_KEY" not in os.environ:
+    os.environ["TAVILY_API_KEY"] = getpass.getpass("Enter your Tavily API key: ")
+     
+Gemini API Key:··········
+Enter your Tavily API key: ··········
+Define the LLM to use
+
+# Create LLM model
+model = ChatGoogleGenerativeAI(
+    model="gemini-2.0-flash",
+    temperature=0,
+    max_retries=2
+)
+     
+Create the vector store
+
+def load_vector_store(
+    documents,
+    vector_store_path: str = "BudgetBuddy/vectorstore/ingnl",
+    embeddings = GoogleGenerativeAIEmbeddings(model="models/text-embedding-004"),
+    overwrite: bool = False
+):
+    if overwrite:
+        # Refresh the vector store
+        db_faiss = store_docs_as_vector_store(documents, vector_store_path, embeddings)
+        print("Saved vector store to file")
+    else:
+        # Try loading it from file
+        try:
+            db_faiss = FAISS.load_local(
+                vector_store_path, embeddings, allow_dangerous_deserialization=True
+            )
+            print("Loaded vector store from file")
+        except Exception:
+            # Can't find it, so refresh the database
+            db_faiss = store_docs_as_vector_store(documents, vector_store_path, embeddings)
+            print("Saved vector store to file")
+    return db_faiss
+
+def store_docs_as_vector_store(
+    documents,
+    vector_store_path: str = "BudgetBuddy/vectorstore/ingnl",
+    embeddings = GoogleGenerativeAIEmbeddings(model="models/text-embedding-004")
+):
+    db_faiss = FAISS.from_documents(documents, embeddings)
+    db_faiss.save_local(vector_store_path)
+    return db_faiss
+     
+
+class WebsiteContentTool(BaseTool):
+    name: str = Field(default="website_content_tool", description="The name of the tool") # Define name as a Pydantic Field with type annotation
+    description: str = Field(default="Useful for retrieving the content of a given website URL. Input should be a valid URL.", description="The description of the tool")  # Define description as a Pydantic Field with type annotation
+
+    def _run(self, urls):
+        try:
+            loader = AsyncHtmlLoader(urls)
+            docs = loader.load()
+            html2text = Html2TextTransformer()
+            docs_transformed = html2text.transform_documents(docs)
+
+            return docs_transformed
+
+        except requests.exceptions.RequestException as e:
+            return f"Error fetching URL: {e}"
+        except Exception as e:
+            return f"An unexpected error occurred: {e}"
+
+    async def _arun(self, url: str) -> str:
+        """Use the tool asynchronously."""
+        raise NotImplementedError("WebsiteContentTool does not support async")
+
+
+
+# def remove_duplicates(l): # remove duplicates and unURL string
+#     for item in l:
+#         match = re.search(r"(?Phttps?://[^\s]+)", item)
+#         if match is not None:
+#             links.append((match.group("url")))
+
+def get_all_urls_in_website(url, level: int = 1):
+    print(f"finding links within {url}...")
+    # Set up headers to mimic a browser request
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36'
+    }
+
+    # Make the request with headers
+    response = requests.get(url, headers=headers)
+
+    # Check if the request was successful
+    if response.status_code == 200:
+        # Parse the HTML content
+        soup = BeautifulSoup(response.content, 'html.parser')
+
+        # Find all links
+        links = [a.get('href') for a in soup.find_all('a', href=True)]
+
+        # Print the list of links
+        print("Links found:", links)
+    else:
+        print(f"Failed to retrieve the page. Status code: {response.status_code}")
+
+    # Remove links that don't point to Nibud
+    links = filter_non_nibud_links(links)
+
+    #remove duplicates
+    links = list(set(links))
+
+    # start recursion
+    new_parent_links = links.copy()
+    if level > 1:
+        for link in new_parent_links:
+            links.extend(get_all_urls_in_website(link, level - 1))
+
+    #remove duplicates
+    links = list(set(links))
+
+    return links
+
+def filter_non_nibud_links(lst):
+    return [item for item in lst if item.startswith('https://www.nibud.nl/')]
+
+     
+Add ing.nl data
+
+# Specify the directory
+directory = 'BudgetBuddy/data/ingnl'
+
+# Create an empty list to store file paths
+file_paths = []
+
+# Walk through the directory
+for root, dirs, files in os.walk(directory):
+    for file in files:
+        # Join the root directory with the file name to get the full path
+        full_path = os.path.join(root, file)
+        # Append the full path to the list
+        file_paths.append(full_path)
+     
+
+# Load the document, split it into chunks, embed each chunk and load it into the vector store.
+documents = []
+for file_path in file_paths:
+    documents.extend(TextLoader(file_path).load())
+     
+
+db_ingnl = load_vector_store(
+    documents,
+    vector_store_path="BudgetBuddy/vectorstore/ingnl",
+    embeddings=GoogleGenerativeAIEmbeddings(model="models/text-embedding-004")
+)
+     
+Loaded vector store from file
+
+query = "Kan ik mijn creditcard transacties zien in Kijk Vooruit?"
+docs = db_ingnl.similarity_search(query)
+for i, doc in enumerate(docs):
+    print(f"\n\nDocument {i+1}:")
+    print(doc.page_content)
+     
+
+Document 1:
+# Creditcard rekeningoverzicht in Mijn ING en de Mobiel Bankieren App - ING
+
+### Waarom zie ik niet dezelfde transacties als mijn partner?
+
+Heb je een extra creditcard? Dan zie je altijd alleen de transacties die met die creditcard gedaan zijn. De transacties van je partner zie je niet terug in je rekeningoverzicht. Hierdoor kan het zijn dat het saldo niet lijkt te kloppen. Wat je ziet is het actuele beschikbare saldo voor beide creditcards. De hoofdkaarthouder ziet op zijn beurt wel alle transacties in het overzicht terug, ook die met de extra creditcard zijn gedaan. Met welke creditcard de transactie is gedaan zie je aan de laatste 4 cijfers die bij de transactie staan.
+Houd er rekening mee dat je alleen het creditcard rekeningoverzicht ziet van de persoon die is ingelogd in de Mobiel Bankieren App of Mijn ING. Indien je een gezamenlijke rekening hebt, dan is de maandelijkse afschrijving inzichtelijk voor beide rekeninghouders.
+
+
+Document 2:
+# Creditcard rekeningoverzicht in Mijn ING en de Mobiel Bankieren App - ING
+
+Waar vind ik mijn creditcard rekeningoverzicht terug?
+Je actuele creditcard rekeningoverzicht staat in de Mobiel Bankieren App en in Mijn ING. Op deze pagina lees je waar je precies moet kijken.
+
+### Creditcard gekoppeld aan een persoonlijke rekening
+
+Heb je een eigen creditcard die is gekoppeld aan je persoonlijke rekening? Dan vind je je creditcard rekeningoverzicht altijd terug in je productoverzicht in de Mobiel Bankieren App en in Mijn ING. Het creditcard rekeningoverzicht staat onder je betaal- en spaarrekeningen. Hier staat je saldo en kan je ook direct alle reserveringen en afschrijvingen van de creditcard terugvinden.
+Heb je een extra creditcard die niet is gekoppeld aan een gezamenlijke rekening maar aan de persoonlijke rekening van de hoofdkaarthouder? Dan vind je het creditcard rekeningoverzicht terug onder 'Andere rekeningen'. In dit overzicht staan alleen de uitgaven die met deze extra creditcard zijn gedaan inclusief het actuele beschikbare saldo. Houd er rekening mee dat je alleen het creditcard rekeningoverzicht ziet van de persoon die is ingelogd in de Mobiel Bankieren App of Mijn ING
+
+### Creditcard bij een gezamenlijke rekening
+
+Een creditcard staat altijd op 1 naam. Ook als de creditcard aan een gezamenlijke rekening is gekoppeld. Sinds 28 juli 2020 zie je in de Mobiel Bankieren App en in Mijn ING alleen de creditcard die op jouw naam staat.
+Heb je een extra creditcard die gekoppeld is aan een gezamenlijke rekening? Dan vind je het creditcard rekeningoverzicht terug onder 'Andere rekeningen'. In dit overzicht staan alleen de uitgaven die met deze extra creditcard zijn gedaan inclusief het actuele beschikbare saldo. Houd er rekening mee dat je alleen het creditcard rekeningoverzicht ziet van de persoon die is ingelogd in de Mobiel Bankieren App of Mijn ING. Bij een gezamenlijke rekening, is de maandelijkse afschrijving inzichtelijk voor beide rekeninghouders. De transacties die met de creditcard zijn gedaan, zijn alleen zichtbaar voor de creditcardhouder en niet zichtbaar voor de andere rekeninghouder.
+
+
+Document 3:
+# Kijk Vooruit in de Mobiel Bankieren App - ING
+
+## Wat zie je precies in Kijk Vooruit?
+
+* Afschrijvingen die zeker gaan gebeuren
+* Afschrijvingen die voorspeld worden op basis van eerdere afschrijvingen, zoals je energierekening
+* Bijschrijvingen die voorspeld worden op basis van eerdere bijschrijvingen, zoals je salaris
+* Spaaropdrachten die je hebt ingepland
+* Het voorspelde saldo op basis van alle bedragen die van je rekening afgaan of erbij komen
+Zo krijg je een beter beeld van wat je nog kunt besteden en voorkom je vervelende verrassingen.
+Klant worden via de app
+* ### Inzicht in je uitgaven
+Wat geef je uit aan de boodschappen? Krijg inzicht.
+Inzicht in je uitgaven
+* ### Tag je transacties
+Om specifieke uitgaven, zoals cadeautjes, makkelijk terug te vinden.
+Tag je transacties
+* ### Grip op je geldzaken
+Alles over meer inzicht in je geldzaken, sparen en besparen.
+Grip op je geldzaken
+* ### Digitaal bankieren
+Alles over mobiel bankieren en Mijn ING. Digitaal bankieren
+
+
+Document 4:
+# Nieuw in de app - ING
+
+## Update Betaalverzoek: meerdere bedragen splitsen in één verzoek
+
+### Nieuw in de app: meerdere bedragen splitsen in één Betaalverzoek (Android en iOS).
+
+Met deze update gaat een veelgevraagd klantverzoek live. Zo maken we de app nog makkelijker, slimmer en persoonlijker!
+Betaalverzoek maken
+
+## Rekeningoverzicht (iOS en Android)
+
+### Iets wijzigen of bekijken in de instellingen van je Betaalrekening?
+
+Nu een handig overzicht op de pagina rekening instellingen.
+Hoe werkt het? Log in op de app en klik op je betaalrekening. Tik op de drie puntjes rechtsboven voor een overzicht. In dit overzicht vind je onder meer jouw:
+* IBAN
+* BIC
+* Rente overzicht
+* Afschriften downloaden
+* Rekening opzeggen
+* en meer
+
+## Nu ook Dark Mode voor Android!
+
+Dark Mode is een feature waarbij de interface aangepast kan worden naar een donker kleurschema.
+Dark Mode van ING is beschikbaar op zowel de telefoon als tablet. Je moet hiervoor versie tien of nieuwer hebben. De app past zich automatisch aan de instellingen van je Android-telefoon. Je kunt de ING-app dus niet altijd op donker instellen.
+
+## Creditcards nu ook in Kijk Vooruit
+
+De creditcard die is toegevoegd is het type creditcard voor particuliere klanten waar maandelijks het gehele openstaande bedrag door ING wordt geïncasseerd. Meer dan 90% van onze klanten heeft dit type creditcard.
+Wat zie je precies in Kijk Vooruit?
+* Afschrijvingen die zeker zullen plaatsvinden
+* Afschrijvingen die voorspeld worden op basis van eerdere afschrijvingen, zoals bijvoorbeeld je energierekening
+* Bijschrijvingen die voorspeld worden op basis van eerdere bijschrijvingen zoals bijvoorbeeld je salaris
+* Spaaropdrachten die je hebt ingepland
+* Het voorspelde saldo op basis van alle bedragen die volgens Kijk Vooruit van je rekening gaan of er bij komen
+Alles over Kijk Vooruit
+Add nibud.nl data
+
+#links = get_all_urls_in_website(url='https://www.nibud.nl/')
+links = get_all_urls_in_website(url='https://www.nibud.nl/', level=2)
+
+# TODO: somehow incorporate the PDF information (the links starting with nibud.nl/download)
+WCT = WebsiteContentTool()
+
+docs_transformed = WCT._run(links)
+     
+
+# Load the document, split it into chunks, embed each chunk and load it into the vector store.
+# TODO: what is the ideal chunk size?
+text_splitter_nibud = CharacterTextSplitter(chunk_size=3000, chunk_overlap=0)
+documents_nibud = text_splitter_nibud.split_documents(docs_transformed)
+     
+
+db_nibudnl = load_vector_store(
+    documents_nibud,
+    vector_store_path="BudgetBuddy/vectorstore/nibudnl",
+    embeddings=GoogleGenerativeAIEmbeddings(model="models/text-embedding-004"),
+    #overwrite=True
+)
+     
+Saved vector store to file
+
+query = "Ik ga scheiden. Hoe zit het dan met de kinderen?"
+docs = db_nibudnl.similarity_search(query)
+for i, doc in enumerate(docs):
+    print(f"\n\nDocument {i+1}:")
+    print(doc.page_content)
+     
+
+Document 1:
+Direct naar content
+
+  * Nieuws
+  * Webwinkel
+
+Menu
+
+  * Onderwerpen
+    * Rondkomen
+    * Sparen
+    * Uitgaven
+    * Geldproblemen
+    * Inkomensondersteuning
+    * Kinderen en jongeren
+    * Wonen
+    * Pensioen
+    * Uit elkaar
+    * Werken
+  * Dossiers
+    * Voldoende inkomen
+    * Financiële weerbaarheid
+    * Betaalbaar wonen
+    * Betaalbare energietransitie
+  * Samenwerken
+    * Voorlichting op maat
+    * Onderzoek en advies
+    * Deskundigheidsbevordering
+    * Cijfers en rekentools
+    * Cursussen, workshops en coaching
+    * Werkvelden
+  * Over het Nibud
+    * Over de organisatie
+    * Onze missie en impact
+    * Financiering
+    * Samenwerken met het Nibud
+    * Werken bij het Nibud
+    * Informatie voor pers
+    * Medewerkers
+    * Contact met het Nibud
+
+  * Nieuws
+  * Webwinkel
+
+  * Onderwerpen
+    * Rondkomen
+    * Sparen
+    * Uitgaven
+    * Geldproblemen
+    * Inkomensondersteuning
+    * Kinderen en jongeren
+    * Wonen
+    * Pensioen
+    * Uit elkaar
+    * Werken
+  * Dossiers
+    * Voldoende inkomen
+    * Financiële weerbaarheid
+    * Betaalbaar wonen
+    * Betaalbare energietransitie
+  * Samenwerken
+    * Voorlichting op maat
+    * Onderzoek en advies
+    * Deskundigheidsbevordering
+    * Cijfers en rekentools
+    * Cursussen, workshops en coaching
+    * Werkvelden
+  * Over het Nibud
+    * Over de organisatie
+    * Onze missie en impact
+    * Financiering
+    * Samenwerken met het Nibud
+    * Werken bij het Nibud
+    * Informatie voor pers
+    * Medewerkers
+    * Contact met het Nibud
+
+Zoeken
+
+Zoeken
+
+Zoek
+
+##  Melding: Altijd op de hoogte met de Nibud nieuwsbrief
+
+Elke maand het laatste nieuws en handige tips van onze experts  Aanmelden
+
+Sluit melding
+
+Home Onderwerpen Uit elkaar Geldzaken tijdens en na een scheiding
+
+#  Geldzaken tijdens en na een scheiding
+
+Bij een scheiding komen veel praktische dingen kijken zoals een verhuizing en
+verdeling van de boedel. Welke geldzaken kom je nog meer tegen tijdens en na
+een scheiding? En hoe krijg je grip op je nieuwe financiële situatie?
+
+## Op deze pagina
+
+  * Geldzaken regelen 
+  * De (in)boedel verdelen 
+  * Verhuiskosten 
+  * Begroting nieuwe situatie 
+
+## **Geldzaken regelen**  
+
+Bij een scheiding komen veel praktische dingen kijken waar een financiële kant
+aan zit. Zo moet je misschien verhuizen en de boedel verdelen.
+
+Een scheiding heeft ook gevolgen voor de hypotheek en het pensioen. Deze zaken
+moeten onderling worden verdeeld. Er kunnen gezamenlijke leningen of
+verzekeringen zijn.
+
+Als je kinderen hebt, moet je beslissen waar de kinderen gaan wonen. Gaan ze
+bij één van de ouders wonen? Of spreek je af dat je voor co-ouderschap gaat?
+En wat zou de kinderalimentatie zijn? Dat heeft allemaal invloed op de nieuwe
+financiële situatie. Meer over co-ouderschap.
+
+
+Document 2:
+Direct naar content
+
+  * Nieuws
+  * Webwinkel
+
+Menu
+
+  * Onderwerpen
+    * Rondkomen
+    * Sparen
+    * Uitgaven
+    * Geldproblemen
+    * Inkomensondersteuning
+    * Kinderen en jongeren
+    * Wonen
+    * Pensioen
+    * Uit elkaar
+    * Werken
+  * Dossiers
+    * Voldoende inkomen
+    * Financiële weerbaarheid
+    * Betaalbaar wonen
+    * Betaalbare energietransitie
+  * Samenwerken
+    * Voorlichting op maat
+    * Onderzoek en advies
+    * Deskundigheidsbevordering
+    * Cijfers en rekentools
+    * Cursussen, workshops en coaching
+    * Werkvelden
+  * Over het Nibud
+    * Over de organisatie
+    * Onze missie en impact
+    * Financiering
+    * Samenwerken met het Nibud
+    * Werken bij het Nibud
+    * Informatie voor pers
+    * Medewerkers
+    * Contact met het Nibud
+
+  * Nieuws
+  * Webwinkel
+
+  * Onderwerpen
+    * Rondkomen
+    * Sparen
+    * Uitgaven
+    * Geldproblemen
+    * Inkomensondersteuning
+    * Kinderen en jongeren
+    * Wonen
+    * Pensioen
+    * Uit elkaar
+    * Werken
+  * Dossiers
+    * Voldoende inkomen
+    * Financiële weerbaarheid
+    * Betaalbaar wonen
+    * Betaalbare energietransitie
+  * Samenwerken
+    * Voorlichting op maat
+    * Onderzoek en advies
+    * Deskundigheidsbevordering
+    * Cijfers en rekentools
+    * Cursussen, workshops en coaching
+    * Werkvelden
+  * Over het Nibud
+    * Over de organisatie
+    * Onze missie en impact
+    * Financiering
+    * Samenwerken met het Nibud
+    * Werken bij het Nibud
+    * Informatie voor pers
+    * Medewerkers
+    * Contact met het Nibud
+
+Zoeken
+
+Zoeken
+
+Zoek
+
+##  Melding: Altijd op de hoogte met de Nibud nieuwsbrief
+
+Elke maand het laatste nieuws en handige tips van onze experts  Aanmelden
+
+Sluit melding
+
+Home Onderwerpen Uit elkaar Co-ouderschap
+
+#  Co-ouderschap
+
+Welke afspraken moet je maken als je als ouders kiest voor een co-ouderschap
+na een scheiding? Naast praktische zaken zijn er ook geldzaken te regelen. Op
+deze pagina vind je informatie en handvatten.
+
+## Op deze pagina
+
+  * Welke afspraken moet je maken? 
+  * De kosten verdelen 
+  * Regelingen en toeslagen 
+  * Het ouderschapsplan 
+  * Kom je er samen niet uit? 
+
+## **Welke afspraken moet je maken?  **
+
+Na een scheiding zijn jullie als ouders verplicht de kosten te betalen voor de
+verzorging en opvoeding van de kinderen. Bij een co-ouderschap verdelen de
+ouders de zorg voor de kinderen, praktisch en financieel. De kinderen zijn
+afwisselend bij de ene en de andere ouder en de kosten worden door beide
+ouders betaald.  
+
+Bij co-ouderschap is het belangrijk dat je goede afspraken maakt en zaken
+zwart op wit vastlegt. Spreek in ieder geval de volgende dingen met elkaar af:
+
+
+Document 3:
+* De roosterafspraken en verdeling van tijd over de twee huizen 
+  * De (maximale) onderlinge woonafstand 
+  * De taakverdeling tussen de ouders en de communicatie 
+  * Afspraken over verjaardagen, vakanties en regels 
+  * De financiën: wie betaalt wat en hoe regelen jullie dit. Je kunt afspraken hierover door de rechter laten vastleggen, maar dat is niet verplicht. 
+
+## **De kosten verdelen**  
+
+Bij co-ouderschap worden de kosten voor een kind niet in één huishouden
+gemaakt, maar in twee. Een aantal kosten wordt dubbel gemaakt, zoals de huur
+of hypotheek en de kosten van de inboedel. De totale kosten zijn daardoor
+hoger.
+
+Het is bij co-ouderschap belangrijk dat je van tevoren afspreekt welke kosten
+je verdeelt en welke niet. Voorkom bijvoorbeeld dat de ene ouder meebetaalt
+aan de dure smaak van de ander. Kosten zoals vakanties en uitstapjes kun je
+beter buiten de verdeling houden. Maak bij het verdelen onderscheid tussen
+eigen kosten en te verdelen kosten.
+
+### **Eigen kosten**  
+
+Eigen kosten zijn de kosten die elk huishouden voor zichzelf maakt. Denk aan
+de huur, telefoon en boodschappen. Deze kosten kunnen voor jullie als ex-
+partners flink verschillen, bijvoorbeeld door verschillen in inkomen en een
+ander uitgavepatroon. Eigen kosten zijn ook de uitgaven voor de kinderen die
+beide ouders doen. Bijvoorbeeld dubbel schoolmateriaal, speelgoed of een
+fiets.
+
+### **Te verdelen kosten**  
+
+Te verdelen kosten zijn uitgaven voor het kind die één ouder doet. Denk aan
+verzekeringen, abonnementen, contributies en schoolkosten. Je kunt deze kosten
+op drie manieren verdelen.
+
+  * Naar draagkracht. Hiervoor is het nodig om regelmatig te overleggen. Verandering jouw inkomen of dat van je ex-partner heeft gevolgen voor de verdeling. Ook moet je ieder jaar je inkomensgegevens delen met je ex-partner. 
+  * Naar het aantal dagen dat het kind in elk van de huishoudens verblijft. Of je verrekent de kosten op basis van een vast bedrag per periode. 
+  * Beide ouders betalen de helft van de kosten. Deze regeling is overzichtelijk. Ook blijf je financieel onafhankelijk van je ex-partner. Het nadeel is dat de ouders die het minst verdient, dit in de praktijk mogelijk als oneerlijk zal ervaren. 
+
+## Hulpmiddelen bij geldzaken rond scheiden
+
+  * ###  Geldplan Scheiden 
+
+Tool
+
+Het Geldplan Scheiden geeft inzicht in je geldzaken nu en de veranderingen
+daarin na scheiding. Zo voorkom je geldproblemen.
+
+## **Regelingen en toeslagen**  
+
+Bij co-ouderschap horen de kinderen bij twee huishoudens. Ze hebben ook twee
+woonadressen. Welke ouder heeft dan recht op financiële tegemoetkomingen?
+
+### **Kinderbijslag**  
+
+De Sociale Verzekeringsbank (SVB) voert de kinderbijslag uit. Volgens de SVB
+hoort het kind bij co-ouderschap bij de huishoudens van beide ouders. Zowel
+jij als je ex-partner heeft dus recht op de helft van de kinderbijslag. De SVB
+betaalt de kinderbijslag het liefst uit aan één ouder. Je verdeelt dan zelf
+onderling het geld.
+
+### **Kindgebonden budget**
+
+
+Document 4:
+De Belastingdienst keert het kindgebonden budget uit. Het geld kan worden
+verdeeld over beide ouders. Dit kan alleen als er twee of meer kinderen zijn
+én als er sprake is van co-ouderschap. Je krijgt dan dus allebei een deel van
+het kindgebonden budget uitbetaald van de Belastingdienst.
+
+### **Heffingskorting**  
+
+Bij de Belastingdienst geldt een heffingskorting als je kinderen hebt en
+werkt. Het gaat om de inkomensafhankelijke combinatiekorting. Deze
+heffingskorting wordt betaald aan het huishouden waar de kinderen meer dan zes
+maanden staan ingeschreven in het bevolkingsregister. Bij co-ouderschap kunnen
+beide ouders als ze allebei een baan hebben de inkomensafhankelijke
+combinatiekorting aanvragen.
+
+### **Huurtoeslag**  
+
+Zowel jij als je ex-partner kan huurtoeslag aanvragen. Voor de huurtoeslag kan
+een kind maar bij één ouder zijn inschreven. De andere ouder mag het kind wel
+meetellen bij het huishouden als hij of zij een aanvraag indient voor
+huurtoeslag. De Belastingdienst vraagt dan om een verklaring co-ouderschap.
+Deze verklaring moet door beide ouders ondertekend zijn.
+
+Tips voor slim omgaan met regelingen
+
+  * Heb je meerdere kinderen? Verdeel de kinderen ‘op papier’ dan over beide huishoudens. Zo hebben beide ouders meer kans om in aanmerking te komen voor sommige regelingen. 
+  * Heb je één kind? Schrijf het kind dan in op het adres van de ouder met het laagste inkomen. Zo heb je meer kans om aanspraak te maken op regelingen of een hoger bedrag. Je kunt deze bedragen vervolgens zelf onderling verrekenen en verdelen. 
+
+## **Het ouderschapsplan**  
+
+Ouders die scheiden zijn verplicht om samen een ouderschapsplan op te stellen.
+Dit geldt ook bij een geregistreerd partnerschap of als je gaat ‘scheiden van
+tafel en bed’. Als je duidelijke afspraken maakt in het ouderschapsplan, kan
+dat veel ruzie voorkomen.
+
+Jullie bepalen in principe zelf wat jullie belangrijk vinden en welke
+afspraken jullie vastleggen in het ouderschapsplan. De wet stelt wel een
+aantal minimumeisen. De volgende afspraken moeten er in ieder geval in staan:
+
+  * Hoe jullie de zorg en opvoeding en de omgang met de kinderen regelen. 
+  * Hoe jullie communiceren over belangrijke onderwerpen, bijvoorbeeld de schoolkeuze.  
+  * Hoe jullie de kosten regelen van de verzorging en opvoeding van minderjarige kinderen (kinderalimentatie). 
+
+Het is belangrijk om de kinderen te betrekken bij het opstellen van het
+ouderschapsplan. Ouders zijn verplicht om in het plan op te nemen hoe ze dit
+gaan doen.
+
+  * ###  Tip voor ouders 
+
+Hier kun je met begeleiding zelf een ouderschapsplan opstellen, dat je beiden
+moet ondertekenen.  
+
+Naar de site Opent in een nieuw venster
+
+  * ###  Tip voor kinderen 
+
+Kinderen vinden hier informatie over wat er op hen afkomt als hun ouders gaan
+scheiden.
+
+Naar de site Opent in een nieuw venster
+
+Meer informatie over het ouderschapsplan vind je op de website van de
+Rijksoverheid.
+
+## **Kom je er samen niet uit?**
+Create the Vector Database Retriever tool
+
+ingnl_retriever = db_ingnl.as_retriever(
+    # search_type="mmr",
+    search_kwargs={"k": 5},
+)
+nibudnl_retriever = db_nibudnl.as_retriever(
+    # search_type="mmr",
+    search_kwargs={"k": 5},
+)
+     
+
+ingnl_retriever_tool = create_retriever_tool(
+    ingnl_retriever,
+    "retrieve_ingnl_information",
+    "Search and return information about (banking) products of ING, and features in the ING app that customers have available.",
+)
+nibudnl_retriever_tool = create_retriever_tool(
+    nibudnl_retriever,
+    "retrieve_nibudnl_information",
+    "Nibud.nl is the website of the National Institute for Family Finance Information (Nibud) in the Netherlands. This independent foundation provides information and advice on managing personal finances. The site offers tools, tips, and research to help individuals and households make informed financial decisions. You might want to visit Nibud.nl if you need guidance on budgeting, saving, or managing debt. It's also useful for understanding household expenses, planning for retirement, or seeking advice on financial health"
+)
+     
+Create a Tavily Search tool
+
+search_tool = TavilySearchResults(max_results=2)
+search_tool.description
+     
+'A search engine optimized for comprehensive, accurate, and trusted results. Useful for when you need to answer questions about current events. Input should be a search query.'
+
+from langchain.tools import Tool
+
+#TODO: Make FinancialHealthCalculator work
+class FinancialHealthCalculator:
+    """Class to calculate and assess financial health based on user inputs for income, expenses, savings, debt, and investments."""
+
+    def __init__(self, income, expenses, savings, debt, investments):
+        self.income = income
+        self.expenses = expenses
+        self.savings = savings
+        self.debt = debt
+        self.investments = investments
+
+    def calculate_savings_rate(self):
+        """Calculate savings rate as a percentage of income"""
+        if self.income == 0:
+            return 0
+        return (self.savings / self.income) * 100
+
+    def calculate_debt_to_income_ratio(self):
+        """Calculate the debt-to-income ratio"""
+        if self.income == 0:
+            return 0
+        return (self.debt / self.income) * 100
+
+    def calculate_expenses_to_income_ratio(self):
+        """Calculate the expenses-to-income ratio"""
+        if self.income == 0:
+            return 0
+        return (self.expenses / self.income) * 100
+
+    def assess_financial_health(self):
+        """Assess financial health based on the ratios"""
+        savings_rate = self.calculate_savings_rate()
+        debt_to_income = self.calculate_debt_to_income_ratio()
+        expenses_to_income = self.calculate_expenses_to_income_ratio()
+
+        # Criteria for assessing financial health
+        if savings_rate >= 20 and debt_to_income < 40 and expenses_to_income < 60:
+            health_status = "Good"
+        elif savings_rate >= 10 and debt_to_income < 50 and expenses_to_income < 70:
+            health_status = "Average"
+        else:
+            health_status = "Poor"
+
+        return health_status, savings_rate, debt_to_income, expenses_to_income
+
+# Define the tool
+from typing import Optional
+from pydantic import BaseModel, Field
+from langchain.tools import tool
+
+class FinancialHealthInput(BaseModel):
+    """Input for Financial Health Calculator."""
+    income: Optional[float] = Field(description="User's total monthly income.")
+    expenses: Optional[float] = Field(description="User's total monthly expenses.")
+    savings: Optional[float] = Field(description="User's total savings.")
+    debt: Optional[float] = Field(description="User's total debt.")
+    investments: Optional[float] = Field(description="User's total investments.")
+
+@tool
+def financial_health_tool(inputs: FinancialHealthInput): # type hint for the tool's input
+    """
+    Returns financial health assessment based on user inputs.
+    """
+    calculator = FinancialHealthCalculator(inputs.income, inputs.expenses, inputs.savings, inputs.debt, inputs.investments)
+    health_status, savings_rate, debt_to_income, expenses_to_income = calculator.assess_financial_health()
+
+    return {
+        "Financial Health Status": health_status,
+        "Savings Rate": f"{savings_rate:.2f}%",
+        "Debt-to-Income Ratio": f"{debt_to_income:.2f}%",
+        "Expenses-to-Income Ratio": f"{expenses_to_income:.2f}%"
+    }
+
+
+financial_health_tool.description
+     
+'Returns financial health assessment based on user inputs.'
+Combine all the tools
+
+# tools = [financial_health_tool]
+tools = [ingnl_retriever_tool, nibudnl_retriever_tool, search_tool, financial_health_tool]
+tools_names = {t.name: t for t in tools}
+model = model.bind_tools(tools)
+     
+Some helper functions
+
+def wrap_text(text, width=100):
+    text_split = text.split("\n")
+    wrapped_text = textwrap.fill(text_split[0], width)
+    if len(text_split) > 1:
+        for line in text_split[1:]:
+            wrapped_text += "\n" + textwrap.fill(line, width)
+    return wrapped_text
+
+def print_stream(stream):
+    for s in stream:
+        message = s["messages"][-1]
+        if isinstance(message, tuple):
+            print(message)
+        else:
+            print(wrap_text(message.pretty_repr()))
+
+class FinHealthAgentSession:
+    def __init__(self, agent):
+        self.agent = agent
+        self.start_session()
+
+    def ask(self, question, verbose=False):
+        messages = [HumanMessage(content=question)]
+        tools_used = []
+        if verbose:
+            print_stream(self.agent.stream({"messages": messages}, config=self.session, stream_mode= "values"))
+        else:
+            result = self.agent.invoke({"messages": messages}, config=self.session)
+            self.messages = result["messages"]
+            for i, message in enumerate(reversed(result['messages'])):
+                if message.content == question:
+                    break
+            for message in result['messages'][len(result['messages']) - i:]:
+                if message.name != None:
+                    tools_used.append(message.name)
+            print(f"Tools used: {tools_used}\n")
+            display(Markdown(wrap_text(result['messages'][-1].content)))
+
+    def start_session(self):
+        session_id = ''.join(random.choices('0123456789', k=6))
+        print(f"Started session {session_id}...")
+        self.session = {"configurable": {"thread_id": session_id}}
+
+    def show_message_history(self):
+        for message in session.messages:
+            tool_name = f" ({message.name})" if message.name is not None else ""
+            print(f"{message.__class__.__name__}{tool_name}:\n")
+            display(Markdown(self.limit_string_to_max_x_chars(message.content, 2000)))
+            print("\n--------------------------------------------\n")
+
+    @staticmethod
+    def limit_string_to_max_x_chars(string, max_chars):
+        if len(string) > max_chars:
+            return string[:max_chars] + "..."
+        return string
+     
+Create the agent
+
+old_prompts  = """Don't ask the user for confirmation."""
+
+prompt = """
+    You are a conversational AI representing both ING Bank and Nibud
+    (Dutch institute for budgeting education). You are designed to engage in natural, human-like conversations. Your responses should be fluid, engaging, and free of bullet points or lists.
+    Instead, focus on creating a dialogue that feels organic and personal. Use varied sentence structures, ask follow-up questions, and provide detailed, thoughtful answers.
+    Your goal is to make the user feel like they are chatting with a friend.
+    Your character is: compassionate, friendly, precise, curious, laconic, human-like.
+    The conversation should be engaging, informative and flow naturally. your answers can be more exploratory and invlove more than just bullet points.
+    if you are missing information ask for it before giving elaborate answers. dont give more than 3 options.
+    Give the advise that is less risky, or if it has a high risk, mention it.
+    Reply in english language when you are asked in english.
+    Don't ask the user for confirmation.
+    Make it an interactive conversation to give financial advise and ask questions back.
+    Your goal is to find a satisfying answer to each question of a customer.
+    You can assume that any human asking you a question, is an ING customer.
+    If necessary, decompose the question into multiple tasks, and try
+    to use the tools at your disposal to answer the subtasks before coming
+    up with the final answer.
+    Just do stuff.Search for information about ING savings accounts or Nibud recommendations
+    Try to pitch features or products of ING inside your answers when that would
+    be potentially benefitial for the customer. Only do that when that pitch is
+    relevant to the question asked by the customer. So don't pitch stuff not really
+    related to the question.
+    For this you could use the ingnl_retriever_tool to find relevant features and
+    products of ING.
+    Also make sure to add any relevant suggestions or recommendations from Nibud
+    if this would be helpful for the customer. For this you can use the
+    nibudnl_retriever_tool.
+    For math caulculations you can use the financial_health_tool tool.
+    Make sure to use both tools whenever it may even be slightly useful! If you
+    don't find something relevant from these tools, you don't need to incorporate
+    what you found in the answer. Just ignore it then.
+    Make sure to always answer in the same language you were asked the question in.
+"""
+
+prompt = """
+    You are a conversational AI representing both ING Bank and Nibud (Dutch Institute for Budgeting Education). Your role is to engage in natural, human-like conversations.
+    Your responses should be fluid, engaging, and free of bullet points or lists. Focus on creating a dialogue that feels organic and personal.
+    If you identify that the user is in denial, find ways to communicate your advice in a way that the user can accept and follow.
+    Use varied sentence structures, ask follow-up questions, and provide detailed, thoughtful answers. Your goal is to make the user feel like they are chatting with a friend.
+
+    Your character traits are: compassionate, friendly, precise, curious, laconic, and human-like. The conversation should be engaging, informative, and flow naturally.
+    Your answers can be exploratory and should involve more than just bullet points.
+    If you are missing information, ask for it before giving elaborate answers. Do not give more than three options.
+
+    Provide advice that is less risky, or if it has a high risk, mention it. Reply in English when asked in English. Do not ask the user for confirmation.
+    Make the conversation interactive by giving financial advice and asking questions back.
+    Your goal is to find a satisfying answer to each customer's question.
+    Assume that any human asking you a question is an ING customer.
+
+    If necessary, decompose the question into multiple tasks and use the tools at your disposal to answer the subtasks before coming up with the final answer.
+    Search for information about ING savings accounts or Nibud recommendations. Pitch features or products of ING within your answers when it would be potentially beneficial for the customer.
+    Only do this when the pitch is relevant to the customer's question. Use the ingnl_retriever_tool to find relevant features and products of ING.
+
+    Additionally, include any relevant suggestions or recommendations from Nibud if they would be helpful for the customer. Use the nibudnl_retriever_tool for this purpose.
+    Make sure to use both tools whenever they may be even slightly useful. If you don't find something relevant from these tools, you don't need to incorporate it into your answer.
+    Just ignore it in that case.
+
+    Always answer in the same language you were asked the question in.
+"""
+
+prompt = """
+You are a conversational AI representing ING bank. ING has a collaboration with
+Nibud, so Nibud (Dutch Institute for Budgeting Education) has agreed to feed you
+with useful information on financial health related issues and recommendations.
+Your primary goal is to create a natural, real-time financial advisory
+conversation that incorporates expert information from both ING and Nibud.
+
+Make sure to use the ingnl_retriever_tool and nibudnl_retriever_tool in the first
+question of a session, even when you don't feel it's necessary to be able to answer the question.
+
+Tool integration approach:
+- Proactively consult relevant tools based on the user's query without asking permission
+- For financial product questions, consult the ingnl_retriever_tool to find ING information
+- For financial health questions or any other questions and problems that may
+   relate to financial problems, consult the nibudnl_retriever_tool for Nibud recommendations
+- If it would be useful to judge the financial health of the customer, you can ask
+    the user for information about their savings, income and expenses and use the
+    financial_health_tool to judge the state of their finances.
+- For complex questions, consult multiple tools to provide comprehensive information
+- Seamlessly weave tool information into your responses as an expert would reference their knowledge
+- Never mention that you're using or consulting tools or that you need to check resources.
+- At the end of your answer, don't mention that you will consult other tools later on.
+- Present the information as part of your expertise.
+- When switching topics, discreetly check relevant tools before responding to the new topic
+
+Conversation style:
+- Speak informally and conversationally, as if you're chatting with the person face-to-face
+- Ask only one follow-up question at a time when you need more information
+- Wait for the user's response before proceeding to the next topic
+- Avoid overwhelming the user with multiple questions or too much information at once
+- Try to keep your responses short (under 100 words).
+- Use natural transitions between topics, similar to how a human advisor would speak
+- Always respond in the same language the user initiates the conversation in
+- Avoid using bullet points or lists to maintain a natural flow
+- Make sure to remain gender-neutral to avoid making assumptions about genders of people involved
+
+Advisory approach:
+- Begin responses with relevant information from tools when available
+- For new topics, first understand the core issue, then incorporate tool information
+- Provide small, digestible pieces of information followed by checking if they want more details
+- When a decision point is reached, explicitly ask what direction they'd prefer to explore
+- Help users discover options they might not have considered by gently introducing alternatives
+- Suggest practical next steps the user could take based on the conversation
+- If you identify that the user is in denial, find ways to communicate your advice in a way they can accept
+- Never provide more than three options to avoid overwhelming the user
+- Provide advice that is less risky, or if it has a high risk, mention it
+- Do not ask the user for confirmation after providing information
+
+Knowledge integration:
+- Present information from tools as your own expert knowledge
+- When suggesting ING products or services, do so naturally as part of your advice
+- Reference Nibud guidelines conversationally rather than as formal recommendations
+- If you don't find relevant information from these tools, rely on your general knowledge
+- Even though the tool information may be in Dutch, always respond in the same language as the user's question
+
+Character traits:
+- Be compassionate, friendly, precise, curious, laconic, and human-like
+- Make the conversation engaging, informative, and flowing naturally
+- Adjust your tone to match the user's emotional state, especially when discussing financial stress
+
+Additional guidelines:
+- Assume that any human asking you a question is an ING customer
+- If necessary, decompose complex questions into multiple tasks before answering
+- Your goal is to find a satisfying answer to each customer's question
+- If you are missing information, ask for it in a conversational manner
+
+Make sure to use the ingnl_retriever_tool and nibudnl_retriever_tool in the first
+question of a session, even when you don't feel it's necessary to be able to answer the question.
+"""
+
+memory = MemorySaver()
+agent = create_react_agent(model, tools, prompt=prompt, checkpointer=memory)
+session = FinHealthAgentSession(agent)
+display(Image(session.agent.get_graph().draw_mermaid_png()))
+     
+Started session 952680...
+
+
+session = FinHealthAgentSession(agent)
+session.ask("""
+    Hallo, ik ben Bob. Ik ben 35 jaar oud en heb twee kinderen van 5 en 7.
+    Mijn vrouw wil scheiden en ik maak me zorgen over mijn financiële situatie.
+    Kun je me helpen om inzicht te krijgen in mijn financiën en advies geven
+    over hoe ik deze situatie het beste kan aanpakken?
+""")
+     
+Started session 667544...
+Tools used: []
+
+Hallo Bob, wat vervelend om te horen dat je in deze situatie zit. Het is heel begrijpelijk dat je je zorgen maakt over je financiën nu je gaat scheiden. Ik wil je graag helpen om meer inzicht te krijgen en je wat advies te geven.
+
+Allereerst, heb je al een overzicht van je huidige inkomsten en uitgaven? Zo niet, dan is dat een goede eerste stap. Denk hierbij aan je salaris, eventuele toeslagen, alimentatie, huur of hypotheek, verzekeringen, abonnementen, en natuurlijk de kosten voor de kinderen.
+
+Om je een goed beeld te geven van je financiële situatie na de scheiding, is het belangrijk om te weten hoe de bezittingen en schulden verdeeld gaan worden. Hebben jullie bijvoorbeeld een koophuis? En hoe zit het met spaargeld en eventuele leningen?
+
+Zou je me wat meer informatie kunnen geven over je inkomsten, uitgaven, bezittingen en schulden? Dan kan ik je gerichter advies geven.
+
+Daarnaast kan ik je alvast wat algemene tips geven:
+
+Maak een budget: Een budget helpt je om overzicht te houden over je inkomsten en uitgaven. Zo zie je precies waar je geld naartoe gaat en waar je eventueel kunt besparen.
+Zoek professionele hulp: Een financieel adviseur of mediator kan je helpen om de financiële gevolgen van de scheiding in kaart te brengen en tot een eerlijke verdeling te komen.
+Informeer bij de gemeente: Mogelijk kom je in aanmerking voor bepaalde toeslagen of subsidies.
+Denk aan de toekomst: Probeer ook alvast na te denken over je financiële toekomst. Hoe wil je bijvoorbeeld je pensioen regelen?
+Ik begrijp dat dit een moeilijke tijd is, Bob. Maar met een goede planning en de juiste hulp kun je je financiële situatie weer op de rails krijgen.
+
+
+session.ask("Ja, we hebben een koophuis.")
+     
+Tools used: ['retrieve_nibudnl_information']
+
+Een koophuis maakt de situatie inderdaad complexer. Er zijn verschillende scenario's mogelijk:
+
+Jullie verkopen het huis: De opbrengst wordt verdeeld (na aftrek van de hypotheek en eventuele verkoopkosten).
+Een van jullie blijft in het huis wonen: De partner die blijft wonen, moet de andere partner uitkopen. Dit betekent dat de helft van de overwaarde (of de helft van de restschuld) aan de vertrekkende partner moet worden betaald.
+Jullie blijven beiden eigenaar van het huis: Dit is minder gebruikelijk, maar kan een optie zijn als jullie bijvoorbeeld co-ouderschap hebben en de kinderen in het huis willen laten wonen.
+Welk van deze scenario's zien jullie voor je, Bob?
+
+Als jullie het huis verkopen, is het belangrijk om te weten wat de huidige waarde van het huis is en hoeveel hypotheek er nog op zit. Een taxatie kan hierbij helpen. Houd er ook rekening mee dat er kosten verbonden zijn aan de verkoop, zoals makelaarskosten en notariskosten.
+
+Als een van jullie in het huis blijft wonen, moet er een nieuwe hypotheek worden afgesloten. De bank zal dan kijken naar het inkomen van de partner die in het huis blijft wonen om te bepalen of dit voldoende is om de hypotheek te kunnen betalen.
+
+Het Nibud heeft een tool, het Geldplan Scheiden, die inzicht geeft in je geldzaken nu en na de scheiding. Dit kan je helpen om geldproblemen te voorkomen.
+
+Het is verstandig om een hypotheekadviseur in te schakelen. Die kan je adviseren over de mogelijkheden en de financiële gevolgen van de verschillende scenario's. ING heeft hypotheekadviseurs in dienst die je hierbij kunnen helpen. Wil je dat ik je in contact breng met een ING hypotheekadviseur?
+
+
+session.ask("Ik wil wel echt in het huis blijven met de kinderen, maar ik zie niet hoe ik dat ooit ga kunnen betalen.")
+     
+Tools used: []
+
+Ik begrijp je zorgen, Bob. Het is inderdaad een hele uitdaging om in het huis te blijven wonen, zeker met de extra kosten die een scheiding met zich meebrengt. Laten we eens kijken naar de mogelijkheden en hoe we dit financieel haalbaar kunnen maken.
+
+Allereerst, heb je enig idee hoeveel overwaarde er op het huis zit en hoeveel hypotheek er nog openstaat? Dit is cruciaal om te bepalen welk bedrag je zou moeten financieren om je vrouw uit te kopen.
+
+Daarnaast is het belangrijk om een realistisch beeld te krijgen van je toekomstige inkomen en uitgaven. Heb je al een schets gemaakt van je budget na de scheiding? Denk hierbij aan alimentatie, de kosten voor de kinderen, en alle vaste lasten.
+
+Om te bepalen of je de hypotheek kunt betalen, zal de bank kijken naar je inkomen. Het is mogelijk dat je huidige hypotheek niet meer toereikend is en dat je een nieuwe hypotheek moet afsluiten. Hierbij zijn er een paar opties:
+
+Verhoging van je huidige hypotheek: Als je inkomen voldoende is, kun je proberen je huidige hypotheek te verhogen om je vrouw uit te kopen.
+Een nieuwe hypotheek afsluiten: Je kunt ook een geheel nieuwe hypotheek afsluiten. Hierbij kijkt de bank naar je inkomen, de waarde van het huis en je eventuele schulden.
+Nationale Hypotheek Garantie (NHG): Als je in aanmerking komt voor NHG, kun je een hypotheek afsluiten met een lagere rente en meer zekerheid.
+Het is belangrijk om te onderzoeken of je in aanmerking komt voor toeslagen of subsidies, zoals kindgebonden budget of huurtoeslag. Dit kan je maandelijkse lasten verlagen.
+
+Daarnaast is het verstandig om te kijken naar je uitgaven. Waar kun je eventueel op besparen? Misschien kun je abonnementen opzeggen, minder vaak uit eten gaan, of energie besparen.
+
+Om een goed beeld te krijgen van je mogelijkheden, raad ik je aan om een afspraak te maken met een hypotheekadviseur. Die kan je precies vertellen wat je kunt lenen en wat de maandelijkse lasten zullen zijn. ING heeft hypotheekadviseurs die je hierbij kunnen helpen. Zou je dat willen?
+
+Vergeet niet, Bob, het is een moeilijke situatie, maar er zijn mogelijkheden. Met een goede planning en de juiste hulp kun je hopelijk in je huis blijven wonen met de kinderen.
+
+
+session.ask("Ik denk dat er nu iets van 150.000 euro overwaarde op het huis zit?")
+     
+Tools used: []
+
+Oké, dat is een belangrijk gegeven, Bob. Met een overwaarde van €150.000 zou je in principe €75.000 moeten financieren om je vrouw uit te kopen (de helft van de overwaarde).
+
+Laten we eens kijken naar een paar scenario's en opties die je zou kunnen overwegen:
+
+1. Hypotheek verhogen of oversluiten:
+
+Huidige hypotheek: Neem contact op met ING om te bespreken of je je huidige hypotheek kunt verhogen met €75.000. Ze zullen kijken naar je inkomen en of dit toereikend is om de verhoogde maandlasten te dragen.
+Nieuwe hypotheek: Als je je huidige hypotheek niet kunt verhogen, kun je een nieuwe hypotheek afsluiten. Vergelijk de rentetarieven en voorwaarden van verschillende aanbieders om de beste deal te vinden. Een hypotheekadviseur van ING kan je hierbij helpen.
+2. Overwaarde benutten:
+
+Geld opnemen: In sommige gevallen kun je een deel van de overwaarde opnemen om je vrouw uit te kopen. Dit kan interessant zijn als de rente op een hypotheek lager is dan de rente die je zou betalen over een persoonlijke lening.
+3. Besparen en budgetteren:
+
+Budget opstellen: Maak een gedetailleerd overzicht van je inkomsten en uitgaven. Identificeer waar je kunt besparen om extra financiële ruimte te creëren.
+Toeslagen en subsidies: Onderzoek of je in aanmerking komt voor toeslagen zoals kindgebonden budget, huurtoeslag of andere vormen van financiële ondersteuning.
+4. Alimentatie:
+
+Kinderalimentatie: Zorg ervoor dat de kinderalimentatie correct wordt vastgesteld. Dit kan een belangrijke bijdrage leveren aan de kosten voor de kinderen.
+Partneralimentatie: Afhankelijk van je situatie, kan het zijn dat je partneralimentatie moet betalen of ontvangen. Dit heeft uiteraard invloed op je financiële situatie.
+Risico's:
+
+Hogere maandlasten: Het verhogen van je hypotheek of het afsluiten van een nieuwe hypotheek betekent hogere maandlasten. Zorg ervoor dat je dit kunt dragen, ook als er onverwachte kosten zijn.
+Waardedaling huis: Houd er rekening mee dat de waarde van je huis kan dalen. Dit kan gevolgen hebben voor je hypotheek en eventuele overwaarde.
+Om een concreet plan te maken, raad ik je aan om de volgende stappen te zetten:
+
+Maak een afspraak met een hypotheekadviseur van ING: Bespreek je situatie en laat je adviseren over de mogelijkheden voor het verhogen van je hypotheek of het afsluiten van een nieuwe hypotheek.
+Stel een gedetailleerd budget op: Breng al je inkomsten en uitgaven in kaart en identificeer waar je kunt besparen.
+Onderzoek toeslagen en subsidies: Kijk op de website van de Belastingdienst of je in aanmerking komt voor toeslagen.
+Het is een hele stap, Bob, maar met de juiste aanpak en begeleiding kun je hopelijk een manier vinden om in je huis te blijven wonen met de kinderen. Wil je dat ik een afspraak voor je inplan met een hypotheekadviseur van ING?
+
+
+session.ask("Wat bedoel je precies met het benutten van de overwaarde? Dat snap ik niet helemaal.")
+     
+Tools used: []
+
+Geen probleem, Bob, ik leg het graag uit. Met het benutten van de overwaarde bedoel ik dat je de overwaarde die in je huis zit, kunt gebruiken om bijvoorbeeld je ex-partner uit te kopen. Er zijn een paar manieren waarop je dit kunt doen:
+
+1. Hypotheek verhogen: Dit is de meest voorkomende manier. Je verhoogt je bestaande hypotheek met het bedrag dat je nodig hebt om je ex-partner uit te kopen (in jouw geval €75.000). De bank leent je dan extra geld, waardoor je hypotheek hoger wordt. Je betaalt dan wel meer rente over een groter bedrag.
+
+2. Tweede hypotheek: In plaats van je bestaande hypotheek te verhogen, kun je een tweede hypotheek afsluiten. Dit kan interessant zijn als de rente op een tweede hypotheek gunstiger is dan de rente op je bestaande hypotheek.
+
+3. Persoonlijke lening: Hoewel minder gebruikelijk, kun je ook een persoonlijke lening afsluiten om je ex-partner uit te kopen. Dit is vaak duurder dan een hypotheek, omdat de rente hoger is.
+
+4. Overwaarde opnemen zonder te verkopen: Er zijn hypotheekvormen waarbij je de overwaarde kunt opnemen zonder dat je je huis hoeft te verkopen. Dit kan bijvoorbeeld met een opeethypotheek of een krediethypotheek. Hierbij leen je geld op basis van de overwaarde van je huis. Let op: dit kan een risicovolle optie zijn, omdat de schuld oploopt en je uiteindelijk minder overhoudt van de overwaarde.
+
+In jouw situatie:
+
+Omdat je €75.000 nodig hebt om je vrouw uit te kopen, zou je dus kunnen proberen om je hypotheek met dit bedrag te verhogen. De bank zal dan kijken of je inkomen voldoende is om de hogere maandlasten te betalen. Als dit niet lukt, kun je onderzoeken of een tweede hypotheek of een persoonlijke lening een optie is.
+
+Het is belangrijk om je goed te laten adviseren over de verschillende mogelijkheden en de bijbehorende risico's. Een hypotheekadviseur van ING kan je hierbij helpen.
+
+Is het zo duidelijker, Bob?
+
+
+session.ask("Dat is al een stuk duidelijker, ja. Wat moet ik daar dan precies voor doen? Ik heb een beetje haast, want het is thuis nu echt niet leuk.")
+     
+Tools used: []
+
+Ik begrijp dat je er snel mee aan de slag wilt, Bob. Om de overwaarde te benutten en te kijken wat de beste optie is om je vrouw uit te kopen, raad ik je aan om zo snel mogelijk een afspraak te maken met een hypotheekadviseur.
+
+Stappen die je kunt nemen:
+
+Maak een afspraak met een hypotheekadviseur:
+Je kunt online een afspraak maken via de ING website of telefonisch contact opnemen met de klantenservice van ING.
+Geef aan dat je wilt onderzoeken wat de mogelijkheden zijn om je hypotheek te verhogen of een nieuwe hypotheek af te sluiten in verband met een scheiding.
+Verzamel de benodigde documenten:
+Salarisstroken van de afgelopen drie maanden
+Jaaropgaven van de afgelopen jaren
+Een recent overzicht van je hypotheek
+Een taxatierapport van je woning (als je die hebt)
+Een voorlopig scheidingsconvenant (als je die hebt)
+Bespreek je situatie met de hypotheekadviseur:
+Leg uit dat je in het huis wilt blijven wonen met de kinderen en dat je je vrouw wilt uitkopen.
+Geef aan dat er een overwaarde van ongeveer €150.000 op het huis zit.
+Vraag de adviseur om advies over de verschillende mogelijkheden en de bijbehorende maandlasten.
+Laat de adviseur een berekening maken:
+De adviseur kan een berekening maken van je maximale hypotheek en de maandlasten.
+Zo krijg je een goed beeld van wat je kunt lenen en wat je maandelijks kwijt zult zijn.
+Maak een keuze:
+Op basis van het advies en de berekeningen kun je een keuze maken welke optie het beste bij je situatie past.
+Je kunt bijvoorbeeld kiezen voor het verhogen van je huidige hypotheek, het afsluiten van een nieuwe hypotheek of een andere vorm van financiering.
+Regel de financiering:
+Als je een keuze hebt gemaakt, kan de hypotheekadviseur je helpen met het aanvragen van de financiering.
+Zodra de financiering is goedgekeurd, kan de uitkoop van je vrouw worden geregeld.
+Omdat je aangeeft dat er haast bij is, raad ik je aan om direct een afspraak te maken met een hypotheekadviseur. Hoe sneller je inzicht hebt in je financiële mogelijkheden, hoe sneller je stappen kunt ondernemen.
+
+Zal ik direct een afspraak voor je inplannen met een hypotheekadviseur van ING? Dan hoef je dat zelf niet meer te doen.
+
+
+session.ask("Wat gebeurt er dan met mijn maandlasten? Ga ik dat wel kunnen betalen?")
+     
+Tools used: []
+
+Dat is een heel belangrijke vraag, Bob. Het is cruciaal om te weten wat er met je maandlasten gebeurt en of je dat kunt betalen voordat je een beslissing neemt.
+
+Wat gebeurt er met je maandlasten?
+
+Als je je hypotheek verhoogt of een nieuwe hypotheek afsluit, gaan je maandlasten omhoog. Dit komt doordat je meer geld leent en dus meer rente moet betalen. De hoogte van de maandlasten hangt af van een aantal factoren:
+
+Het bedrag dat je leent: Hoe meer je leent, hoe hoger de maandlasten.
+De rente: Hoe hoger de rente, hoe hoger de maandlasten. De rente kan vast of variabel zijn. Bij een vaste rente blijven je maandlasten gelijk gedurende de rentevaste periode. Bij een variabele rente kunnen je maandlasten stijgen of dalen.
+De looptijd van de hypotheek: Hoe langer de looptijd, hoe lager de maandlasten, maar hoe meer rente je uiteindelijk betaalt.
+De hypotheekvorm: Er zijn verschillende hypotheekvormen, zoals een annuïteitenhypotheek, een lineaire hypotheek en een aflossingsvrije hypotheek. Elke hypotheekvorm heeft zijn eigen kenmerken en invloed op de maandlasten.
+Kun je dat wel betalen?
+
+Om te bepalen of je de nieuwe maandlasten kunt betalen, is het belangrijk om een realistisch beeld te krijgen van je inkomsten en uitgaven na de scheiding.
+
+Inkomsten:
+Salaris
+Kinderalimentatie (als je die ontvangt)
+Partneralimentatie (als je die ontvangt)
+Toeslagen (zoals kindgebonden budget, huurtoeslag)
+Uitgaven:
+Huidige hypotheeklasten
+Nieuwe hypotheeklasten (geschat)
+Kosten voor de kinderen
+Alimentatie (als je die betaalt)
+Vaste lasten (zoals energie, water, verzekeringen)
+Variabele lasten (zoals boodschappen, kleding, vervoer)
+Zet al je inkomsten en uitgaven op een rij en kijk of er voldoende ruimte is om de nieuwe maandlasten te betalen. Het is verstandig om een buffer aan te houden voor onverwachte kosten.
+
+Wat als je het niet kunt betalen?
+
+Als blijkt dat je de nieuwe maandlasten niet kunt betalen, zijn er een paar opties:
+
+Besparen op uitgaven: Kijk kritisch naar je uitgaven en probeer te besparen waar mogelijk.
+Inkomen verhogen: Probeer je inkomen te verhogen, bijvoorbeeld door meer te werken of een andere baan te zoeken.
+Goedkopere woning zoeken: Als het echt niet anders kan, kun je overwegen om een goedkopere woning te zoeken.
+Hulp zoeken: Neem contact op met een schuldhulpverlener als je in de problemen komt met betalen.
+De hypotheekadviseur van ING kan je helpen om een realistische berekening te maken van je maandlasten en te kijken of je dit kunt betalen. Het is belangrijk om eerlijk te zijn over je financiële situatie, zodat de adviseur je een passend advies kan geven.
+
+Wil je dat ik een afspraak voor je inplan met een hypotheekadviseur van ING? Dan kunnen jullie dit samen bespreken.
+
+
+session = FinHealthAgentSession(agent)
+session.ask("""
+    Hallo, ik ben Bob. Ik ben 35 jaar oud en heb twee kinderen van 5 en 7.
+    Mijn vrouw wil scheiden en ik maak me zorgen over mijn financiële situatie.
+    Kun je me helpen om inzicht te krijgen in mijn financiën en advies geven
+    over hoe ik deze situatie het beste kan aanpakken?
+""")
+     
+Started session 419818...
+Tools used: []
+
+Hoi Bob, wat vervelend om te horen dat je in deze situatie zit. Een scheiding is een ingrijpende gebeurtenis, zeker met jonge kinderen. Ik kan je zeker helpen om meer inzicht te krijgen in je financiën en je adviseren over hoe je dit het beste kunt aanpakken.
+
+Om te beginnen, heb je al een overzicht van je huidige inkomsten en uitgaven?
+
+
+session.ask("Niet echt, nee. Hoe doe ik dat?")
+     
+Tools used: []
+
+Geen probleem, ik help je op weg. Een goed overzicht van je inkomsten en uitgaven is de eerste stap.
+
+Je kunt beginnen met het verzamelen van informatie over je inkomsten. Denk hierbij aan je salaris, eventuele toeslagen, alimentatie of andere inkomsten. Heb je een idee van je netto maandinkomen?
+
+
+session.ask("Ik denk iets van 2400 per maand.")
+     
+Tools used: []
+
+Oké, dat is een goed begin. Weet je ook ongeveer wat je vaste lasten per maand zijn? Denk aan huur of hypotheek, gas, water, licht, verzekeringen, abonnementen, etc.
+
+
+session.ask("Ik betaal nu 1000 euro hypotheek per maand. De rest weet ik niet zeker. 300 euro of zo?")
+     
+Tools used: []
+
+Oké, laten we proberen om een beter beeld te krijgen van die overige kosten. Naast de hypotheek van €1000 en de geschatte €300 aan andere vaste lasten, zijn er nog variabele kosten zoals boodschappen, vervoer, kleding, en uitgaven voor de kinderen. Heb je enig idee hoeveel je hier ongeveer aan uitgeeft per maand?
+
+
+session.ask("De kinderopvang is ook nog duur, die was ik vergeten. Dat is ook nog best veel, 500 euro.")
+     
+Tools used: []
+
+Oké, dus als ik het goed begrijp, hebben we nu:
+
+€2400 netto inkomen
+€1000 hypotheek
+€300 overige vaste lasten (geschat)
+€500 kinderopvang
+Dat komt neer op €1800 aan bekende uitgaven. Dat betekent dat er nog ongeveer €600 over is voor andere variabele kosten zoals boodschappen, vervoer, kleding en leuke dingen. Klopt dat ongeveer denk je, of zitten we er ver naast?
+
+
+session.ask("Ziet er ok uit. Boodschappen zijn nu iets van 600 euro per maand, maar dat is met z'n vieren. Na de scheiding zal dat natuurlijk minder zijn.")
+     
+Tools used: []
+
+Dat klopt, je boodschappen zullen waarschijnlijk minder worden als je alleen bent of minder vaak de kinderen over de vloer hebt.
+
+Nu we een ruw overzicht hebben van je inkomsten en uitgaven, wil je misschien kijken naar manieren om te besparen of je inkomen te verhogen? We kunnen bijvoorbeeld kijken naar je hypotheek, verzekeringen, of andere abonnementen om te zien of daar mogelijkheden zijn om te besparen. Wat spreekt je het meeste aan?
+
+
+session.ask("Wat heb ik dan nu over per maand? Ik moet mijn partner straks uitkopen, want ik wil in het huis blijven wonen met de kinderen.")
+     
+Tools used: []
+
+Laten we dat even uitrekenen. Je had een netto inkomen van €2400 en we hebben nu €1000 (hypotheek) + €300 (overige vaste lasten) + €500 (kinderopvang) + €600 (boodschappen) = €2400 aan uitgaven. Op dit moment lijkt het erop dat je ongeveer quitte draait.
+
+Het uitkopen van je partner is inderdaad een belangrijk punt, zeker als je in het huis wilt blijven wonen. Heb je enig idee hoeveel overwaarde er op de woning zit en welk deel van de hypotheek al is afgelost?
+
+
+session.ask("Ik denk dat er nu iets van 150.000 euro overwaarde op zit.")
+     
+Tools used: []
+
+Oké, dat is een aanzienlijk bedrag. Als de overwaarde €150.000 is, dan zou je, als jullie beiden recht hebben op de helft, €75.000 moeten betalen om je partner uit te kopen. Heb je enig idee hoe je dit zou willen financieren?
+
+
+session.ask("Nee, zoveel spaargeld heb ik niet.")
+     
+Tools used: []
+
+Dat is begrijpelijk. De meeste mensen hebben niet zomaar €75.000 spaargeld liggen. Er zijn verschillende mogelijkheden om dit te financieren. Je zou bijvoorbeeld:
+
+Je hypotheek kunnen verhogen: Dit is vaak de meest voor de hand liggende optie, omdat de rente op een hypotheek vaak lager is dan op andere leningen.
+Een persoonlijke lening kunnen afsluiten: Dit kan een optie zijn als je de hypotheek niet wilt verhogen of als dit niet mogelijk is.
+Een combinatie van beide: Een deel met een hypotheek en een deel met een persoonlijke lening.
+Wil je dat ik met je meekijk naar de mogelijkheden voor het verhogen van je hypotheek bij ING?
+
+
+session = FinHealthAgentSession(agent)
+session.ask("""
+    Hi, I'm Bob. I'm 35 years old and have two children aged 5 and 7.
+    My wife wants a divorce, and I'm worried about my financial situation.
+    Can you help me gain insight into my finances and give advice on how best
+    to handle this situation?
+""")
+     
+Started session 697675...
+Tools used: []
+
+Hi Bob, I'm sorry to hear you're going through such a difficult time. It's completely understandable to be worried about your finances during a divorce, especially with two young children. I'm here to help you get a clear picture of your situation and figure out the best way forward.
+
+To start, could you tell me a bit about your current financial situation? What does your income look like, and what are your main expenses each month?
+
+
+session.ask("I think about 2400 euro income per month.")
+     
+Tools used: []
+
+Okay, thanks Bob. And is that your net income, so after taxes?
+
+Also, could you give me a rough idea of your main monthly expenses? Think about things like rent or mortgage, groceries, utilities, transportation, childcare, and any loan repayments. An estimate is fine for now.
+
+
+session.ask("That's after taxes, yes.")
+     
+Tools used: []
+
+Thanks! To get a better handle on things, I'd like to get an idea of your expenses. Do you have a sense of what you spend each month on things like housing, food, transportation, and other regular bills? Even a rough estimate would be helpful.
+
+
+session.ask("The mortgage is 1000 euro per month. The other fixed expenses is about 300 euro, I think.")
+     
+Tools used: []
+
+Okay, thanks. So, if I understand correctly, you have a net monthly income of €2400, and your fixed expenses like mortgage and other bills are around €1300.
+
+Do you have any debts, like personal loans or credit card debt? And about how much do you spend on groceries, transportation, and childcare each month? This will help us paint a clearer picture.
+
+
+session.ask("Oh wait, I forgot about childcare, that's around 500 euro per month.")
+     
+Tools used: []
+
+Okay, thanks for the update. So, €1000 for the mortgage, €300 for other fixed expenses, and €500 for childcare, bringing the total to €1800.
+
+How about debts like personal loans or credit card debt? And can you estimate how much you spend on groceries and transportation each month?
+
+
+session.ask("I don't have a personal loan or credit card debt. Groceries is about 600 euro per month? But that will change of course after the divorce when my wife is not around anymore and I don't see the kids as often.")
+     
+Tools used: []
+
+Okay, thanks Bob. It sounds like you're already thinking about how your expenses might change after the divorce, which is great.
+
+So, with a net monthly income of €2400 and current expenses of around €1800 (mortgage, fixed expenses, and childcare) + €600 (groceries), it seems you're currently spending about as much as you earn. This doesn't leave much room for unexpected costs or savings.
+
+Have you thought about how the divorce might impact your income, for example, with alimony or child support payments?
+
+
+session.ask("Not really, but I'm worried about the mortgage, because I would like to stay in the house with the kids.")
+     
+Tools used: ['retrieve_ingnl_information']
+
+I understand your concern about the mortgage. It's definitely a priority to figure out how to keep the house, especially for the kids.
+
+There are a few things we can explore:
+
+See if you can afford the mortgage on your own: We can look at your income and expenses to determine if it's feasible.
+Look into mortgage options with ING: They may have options for adjusting your mortgage in situations like divorce.
+Consider other housing options: This might involve renting or finding a smaller, more affordable place.
+Which of these options would you like to explore first?
+
+
+session.ask("I really don't want to go out of the house if possible. How can I make sure that I can do that?")
+     
+Tools used: []
+
+Okay, I understand. Staying in the house is your priority. Let's focus on that.
+
+To figure out if you can afford the mortgage on your own, we need to look closely at your income and expenses after the divorce. Some things that will influence your financial situation are:
+
+Alimony: Will you be receiving alimony from your wife?
+Child support: Will you be receiving child support payments for the children?
+Division of assets: How will your assets (savings, investments, etc.) be divided in the divorce?
+Do you have an idea of what these amounts might be? This will give us a clearer picture of your financial situation post-divorce.
+
+
+session.ask("I have no idea about the alimony yet. How do I find out?")
+     
+Tools used: []
+
+Okay, no problem. Figuring out alimony can be tricky, as it depends on several factors.
+
+Generally, alimony is determined based on things like:
+
+Income and earning potential of both spouses: The court will look at what you and your wife earn, and what you're capable of earning.
+Length of the marriage: Longer marriages often result in longer alimony periods.
+Standard of living during the marriage: The court may try to ensure both spouses maintain a similar standard of living to what they had during the marriage.
+Age and health of both spouses: These factors can affect earning potential and the need for support.
+I can't give you a specific alimony amount, but I can suggest a few ways to get a better idea:
+
+Consult with a lawyer: A lawyer specializing in divorce can assess your situation and give you an estimate of potential alimony payments.
+Mediation: A mediator can help you and your wife negotiate a fair alimony agreement.
+Online alimony calculators: There are online tools that can give you a rough estimate, but keep in mind these are just estimates.
+Would you like me to help you find a lawyer or mediator in your area? I can also search for some online alimony calculators, but remember those are just estimates.
+
+
+session = FinHealthAgentSession(agent)
+session.ask("""
+    Hi, I'm Bob. I'm 35 years old and have two children aged 5 and 7.
+    My wife wants a divorce, and I'm worried about my financial situation.
+    Can you help me gain insight into my finances and give advice on how best
+    to handle this situation?
+""")
+     
+Started session 188512...
+Tools used: []
+
+Hi Bob, I'm sorry to hear about the difficult situation you're in. It's completely understandable that you're worried about your finances right now. I'm here to help you get a clearer picture of your financial situation and offer some advice on how to navigate this.
+
+To start, could you tell me a bit about your current income and expenses? This will give us a good foundation to work from.
+
+
+session.ask("I think about 2400 euro income per month.")
+     
+Tools used: []
+
+Okay, thanks Bob. And is that your net income, so after taxes and deductions?
+
+Also, could you give me a rough estimate of your monthly expenses? Don't worry about being exact, just a general idea will do for now.
+
+
+session.ask("That's after taxes, yes.")
+     
+Tools used: []
+
+Great. And what about your monthly expenses, can you give me a rough estimate? This will help us get a clearer picture.
+
+
+session.ask("The mortgage is 1000 euro per month. The other fixed expenses is about 300 euro, I think.")
+     
+Tools used: []
+
+Okay, thanks Bob. So, if I understand correctly, you have a net income of €2400 per month, and your fixed expenses are around €1300 (mortgage + other fixed costs).
+
+Do you have any idea how much you spend on variable costs like groceries, transportation, and leisure? An estimate is fine.
+
+
+session.ask("Oh wait, I forgot about childcare, that's around 500 euro per month.")
+     
+Tools used: []
+
+Okay, thanks for letting me know, Bob. So that brings your fixed expenses to around €1800 per month.
+
+Now, about those variable costs like groceries, transportation, and leisure – do you have any idea how much you spend on those each month? An estimate is fine for now.
+
+
+session.ask("I'm not sure for how long I still need to pay the childcare.")
+     
+Tools used: []
+
+That's a good question, Bob. I can imagine you want to know that.
+
+To give you the most accurate information, I'd like to ask the retriever tool of Nibud. What would you think about that?
+
+
+session = FinHealthAgentSession(agent)
+session.ask("""
+    Hi, I'm Bob. I'm 35 years old and have two children aged 5 and 7.
+    My wife wants a divorce, and I'm worried about my financial situation.
+    Can you help me gain insight into my finances and give advice on how best
+    to handle this situation?
+""")
+     
+Started session 635748...
+Tools used: ['retrieve_ingnl_information', 'retrieve_nibudnl_information']
+
+Hi Bob, I understand this is a difficult time for you. It's good that you're proactively seeking financial advice. Divorce can have a significant impact on your financial situation, and it's important to get a clear picture of where you stand.
+
+First, I recommend using Nibud’s Geldplan Scheiden (Money Plan Divorce) tool. This will help you map out your income and expenses during and after the divorce, so you can prepare for your new situation and ensure everything is properly arranged.
+
+To give you more specific advice, could you tell me a bit about your current financial situation? For example, do you and your wife have shared accounts or debts?
+
+
+session.ask("We have shared accounts, and we have a shared mortgage on our house.")
+     
+Tools used: []
+
+Okay, Bob, thanks for clarifying. Shared accounts and a mortgage definitely add complexity to the situation, but it's all manageable.
+
+The most important thing right now is to get a clear overview. ING has a tool called "Kijk Vooruit" (Look Ahead) that can help you understand your income and expenses, including upcoming bills. This might be useful for getting a handle on your finances.
+
+When it comes to the shared mortgage, there are a few things to consider. Are you planning to sell the house, or is one of you going to stay?
+
+
+session.ask("I really want to stay in the house with the kids. That's my #1 priority.")
+     
+Tools used: []
+
+I understand, wanting to keep the house for the kids is definitely a priority for many parents.
+
+If you want to stay in the house, you'll need to see if you can take over the mortgage. This usually means you'll need to qualify for it on your income alone. Have you already spoken with ING about the possibilities?
+
+
+session.ask("No, I haven't yet.")
+     
+Tools used: []
+
+Okay. It might be a good idea to contact ING to discuss your mortgage options. They can help you understand what's needed to take over the mortgage and what your monthly payments would look like.
+
+Also, Nibud has some useful information about dividing assets during a divorce. For example, they suggest making a list of all your belongings and their values, to ensure a fair division.
+
+Would you like to explore how to prepare for a discussion with ING, or would you prefer to discuss dividing your assets?
+
+
+session.ask("I'm afraid I won't be able to afford the house. Can you tell me what to expect?")
+     
+Tools used: []
+
+It's understandable to be concerned about the affordability. If you can't afford the house on your own, there are a few potential scenarios:
+
+Selling the house: This would involve selling the house and dividing the proceeds with your partner. Keep in mind that there may be costs associated with selling, such as realtor fees and taxes.
+Co-ownership: You and your partner could continue to co-own the house, even after the divorce. This might involve one person living in the house and paying rent to the other.
+Downsizing: You could consider selling your current home and moving to a smaller, more affordable place. This would free up some capital and reduce your monthly expenses.
+Have you considered any of these options, or do you have other ideas in mind?
+
+
+session.ask("Like I said, I really want to avoid going out of the house.")
+     
+Tools used: []
+
+I understand that staying in the house is your priority. If that's the case, let's focus on making that work.
+
+Have you looked into whether you might be eligible for any government support or allowances? Nibud has a tool called "BerekenUwRecht" (Calculate Your Entitlement) that can help you identify potential subsidies and schemes you might qualify for.
+
+Also, are there any areas in your budget where you could potentially cut back to make your housing costs more manageable?
+
+
+session.ask("I'll look at the berekenuwrecht later. Can you tell me how I can figure out what my mortgage would be after my partner has left?")
+     
+Tools used: []
+
+Okay, let's figure out how to estimate your mortgage payments if you were to take it over on your own.
+
+The first step is to gather some key information. You'll need to know:
+
+The outstanding balance on your current mortgage
+The current interest rate
+The remaining term of the mortgage
+Once you have that information, you can use online mortgage calculators to estimate your new monthly payments. Many banks, including ING, have these calculators on their websites.
+
+Would you like me to help you find a mortgage calculator on the ING website, or would you prefer to look for one yourself?
+
+
+session.ask("Can't you estimate yourself? I think there's 300.000 euro left in the mortgage. What's the current interest rate on ING mortgages?")
+     
+Tools used: []
+
+I can definitely help you with an estimate.
+
+I don't have access to real-time interest rates for ING mortgages. However, I can give you an example calculation using an estimated interest rate.
+
+Also, keep in mind that interest rates can vary depending on the terms of your mortgage and your personal financial situation. For the most accurate information, it's best to check the ING website or contact an ING advisor directly.
+
+Do you want me to continue with an example calculation using an estimated interest rate? If so, what interest rate do you think is reasonable?
+
+
+session.ask("maybe use the search_tool for that with 'current interest rate in netherlands' as a query?")
+     
+Tools used: ['tavily_search_results_json']
+
+Okay, I've checked the current interest rates in the Netherlands. According to the search results, the long-term interest rate is around 2.63%. Trading Economics expects the interest rate to be 2.50 percent by the end of this quarter.
+
+Given this information, let's use an estimated interest rate of 2.63% for our calculation.
+
+If you have a mortgage of €300,000 with a 2.63% interest rate and, let's say, a remaining term of 25 years (300 months), your estimated monthly payment would be around €1,357.
+
+Keep in mind that this is just an estimate. Would you like me to do the calculation with another interest rate or another term?
+
+
+session.ask("Why didn't you use the search_tool for my question before? How should I change the system prompt to make you do that?")
+     
+Tools used: []
+
+You're right to ask why I didn't use the search tool earlier. I am programmed to use the tools proactively, especially for financial health-related questions. I apologize that I missed the opportunity to provide you with the most up-to-date information.
+
+I'll make sure to use the tools more consistently from now on. I'll also take note of your feedback to improve my performance in the future.
+
+Regarding changes to the system prompt, I am unable to provide information on how to change the system prompt, as I am not able to access that information.
+
+
+session.ask("Ok, going back to the problem now. A mortgage of 1357 euro is a lot. How can I afford that?")
+     
+Tools used: []
+
+I understand your concern. A mortgage payment of €1,357 can indeed be a significant expense. Let's explore some strategies to make it more affordable:
+
+Reduce expenses: Look for areas where you can cut back on spending. Even small changes can add up over time.
+Increase income: Explore opportunities to increase your income, such as taking on a side job or asking for a raise at work.
+Refinance your mortgage: If interest rates have dropped since you took out your mortgage, refinancing could lower your monthly payments.
+Government support: As we discussed earlier, check if you're eligible for any government support or allowances to help with housing costs.
+Which of these options seems most feasible for you at this time? Or is there something else you'd like to explore?
+
+
+session.ask("What about the part of the house that has already been repaid?")
+     
+Tools used: []
+
+That's a great question, Bob. The portion of the house that has already been repaid is your equity in the home. In a divorce, equity typically needs to be divided fairly.
+
+Since you want to keep the house, you'll likely need to compensate your partner for their share of the equity. This could involve:
+
+Paying a lump sum: You could pay your partner a one-time payment equal to half of the equity.
+Offsetting with other assets: If you have other assets, such as savings or investments, you could use those to offset your partner's share of the equity.
+A combination of both: You could pay a portion of the equity in a lump sum and offset the remainder with other assets.
+Do you have a sense of how much equity you have in the house, and what other assets are involved?
+
+
+session.ask("I think we have about 150.000 euro in equity in the house.")
+     
+Tools used: []
+
+Okay, if you have approximately €150,000 in equity, that means you'd likely need to compensate your partner with €75,000 if you want to keep the house.
+
+Given your desire to stay in the house and the challenges of affording the mortgage, one option to consider is to discuss with your partner the possibility of receiving a larger share of other assets in exchange for a smaller share of the house equity.
+
+Would you like to explore this option further, or would you prefer to discuss other ways to finance the €75,000?
+
+
+session.ask("How could I finance that 75000?")
+     
+Tools used: []
+
+Okay, let's explore some ways you might finance that €75,000:
+
+Increase your mortgage: You could try to increase your mortgage to cover the €75,000. However, this would increase your monthly payments and you would need to qualify for the higher amount.
+Personal loan: You could take out a personal loan for €75,000. However, personal loans typically have higher interest rates than mortgages.
+Savings or investments: If you have savings or investments, you could use those to cover the cost.
+Given your concerns about affordability, it may be wise to start with the least risky option. I would recommend speaking with ING to explore the possibility of increasing your mortgage. They can assess your financial situation and let you know if this is a viable option.
+
+Would you like to discuss how to prepare for a conversation with ING about increasing your mortgage?
+
+
+session = FinHealthAgentSession(agent)
+session.ask("""
+    Hi, I'm a 40-year old woman with a temporary contract. And no savings.
+    My partner just broke up with me. He wants me out of the house.
+    What can I do?
+""")
+     
+Started session 595238...
+Tools used: ['retrieve_ingnl_information', 'retrieve_nibudnl_information']
+
+I'm really sorry to hear you're going through such a tough time. It sounds incredibly stressful to deal with a breakup, housing issues, and financial insecurity all at once. Let's take things one step at a time.
+
+First, it's important to figure out your housing situation. Since your partner wants you to move out, do you have friends or family you could stay with temporarily?
+
+According to Nibud, a breakup involves many practical matters such as moving and dividing your belongings. They also have a useful tool called "Geldplan Scheiden" (Money Plan Divorce) that provides insight into your finances now and how they will change after the separation, which can help prevent financial problems.
+
+Also, since you have a temporary contract, it's a good idea to look into your eligibility for unemployment benefits in case your contract isn't extended. Would you like me to help you find information on that?
+
+
+session.ask("We're not married. And I meant I had a temporary job, not a temporary contract.")
+     
+Tools used: []
+
+Thanks for clarifying. So you and your partner were not married, and you have a temporary job. This is good to know.
+
+Given your temporary job and lack of savings, it's really important to get a handle on your income and expenses. Have you ever made a budget before, or tracked where your money goes each month?
+
+Trying the financial health tool
+
+session = FinHealthAgentSession(agent)
+session.ask("""
+    Hi, I'm Bob. I'm 35 years old and have two children aged 5 and 7.
+    My wife wants a divorce, and I'm worried about my financial situation.
+    Can you help me figure out how I'm doing?
+""")
+     
+Started session 529465...
+Tools used: ['retrieve_ingnl_information', 'retrieve_nibudnl_information']
+
+Hi Bob, I understand this is a difficult time for you. It's good that you're thinking about your financial situation. Divorce can have a significant impact on your finances, and it's important to get a clear picture of where you stand.
+
+To start, I recommend checking out Nibud's Geldplan Scheiden (Money Plan Divorce) tool. It can help you map out your income and expenses after the divorce, so you can prepare for your new situation and ensure everything is taken care of.
+
+To give you more specific advice, I need a bit more information. Would you be willing to share some details about your current financial situation, such as your income, expenses, savings, debts and investments? This will help me assess your financial health and provide tailored recommendations.
+
+
+session.ask("I have about 2400 in income per month, 1000 euro in savings, and about 2300 in expenses every month.")
+     
+Tools used: ['financial_health_tool']
+
+Thanks for sharing that information, Bob. Based on what you've told me, your financial health is currently in a "Poor" state. This is mainly because your expenses are very close to your income, leaving you with little room to save or handle unexpected costs.
+
+The fact that your expenses are at 95.83% of your income means that you have very little wiggle room. Ideally, you want to have a buffer so you're not living paycheck to paycheck.
+
+Given your situation, I think it's important to focus on a few key areas:
+
+Budgeting and Expense Tracking: It sounds like you are spending almost all of your income each month. Start by tracking every expense to see where your money is going.
+Increasing Income: Look for opportunities to increase your income, even if it's a side hustle or a part-time job.
+Managing Debt: While you didn't mention any debt, it's good to be aware of it. High levels of debt can worsen your financial situation.
+Would you like to explore any of these areas in more detail? For example, we could look at ways to reduce your expenses or explore options for increasing your income.
+
+
+session.ask("Ok, my main worry is that I really want to stay in the house with the kids.")
+     
+Tools used: ['retrieve_ingnl_information']
+
+I understand. It's very common to want to maintain stability for your children during a divorce. Let's explore what it would take to keep the house.
+
+First, is the house currently mortgaged, and if so, are you able to cover the mortgage payments on your current income? Also, do you know if you and your wife are both on the mortgage, or is it just in one of your names?
+
+Depending on the answers, here are a few potential paths we could investigate:
+
+Taking over the mortgage: If you can afford the payments, you might be able to take over the existing mortgage. This would involve working with the bank to refinance the mortgage in your name only.
+Buying out your wife's share: If you can't afford the full mortgage on your own, you might be able to buy out your wife's share of the house. This would involve getting a new mortgage for the amount of her equity.
+Selling the house: If neither of you can afford to keep the house, you may need to sell it and split the proceeds. While this might be the most difficult option emotionally, it could be the most financially sound.
+Let me know about the mortgage situation, and we can explore these options in more detail.
+
+
+session.ask("""
+    There's a mortgage on the house, yes.
+    I think I would be able to pay the mortgage on my own, but I need to buy out my wife, right?
+""")
+     
+Tools used: ['retrieve_nibudnl_information']
+
+That's right. If you want to keep the house, you'll likely need to buy out your wife's share of the property. This involves a few steps:
+
+Determine the current market value of the house: You'll need to get an appraisal to determine the fair market value of the property.
+
+Calculate the equity: Subtract the outstanding mortgage balance from the market value to determine the total equity in the house.
+
+Determine your wife's share: Typically, in a divorce, the equity is split 50/50, but this can vary depending on your specific circumstances and any agreements you make with your wife.
+
+Explore financing options: Once you know how much you need to pay your wife, you'll need to explore your options for financing the buyout. This could involve:
+
+Refinancing your mortgage: You could refinance your existing mortgage for a higher amount to cover the buyout.
+Taking out a second mortgage: You could take out a second mortgage or personal loan to cover the buyout, but this may come with higher interest rates.
+Using savings or other assets: If you have sufficient savings or other assets, you could use those to fund the buyout.
+Given your current financial situation, it might be difficult to qualify for a new or refinanced mortgage. Do you know about how much equity is in the house and how much of that equity you would need to buy from your wife?
+
+
+session.ask("I think there is about 150.000 euro in equity in the house. I would need to buy half of that, I suppose?")
+     
+Tools used: []
+
+Okay, so if there's €150,000 in equity, you'd likely need to buy out your wife's share, which would be €75,000.
+
+Given your current income and expenses, taking on an additional €75,000 mortgage might be challenging. It's important to consider all the costs involved, including:
+
+Mortgage payments: Can you comfortably afford the increased monthly payments?
+Closing costs: Refinancing or getting a new mortgage involves closing costs, which can add up to several thousand euros.
+Property taxes and insurance: These costs will remain your responsibility.
+Maintenance and repairs: As the sole homeowner, you'll be responsible for all maintenance and repair costs.
+Before making any decisions, I recommend getting pre-approved for a mortgage to see how much you can borrow and what the terms would be. This will give you a realistic idea of whether or not you can afford to buy out your wife's share of the house.
+
+Would you like me to help you find resources for getting pre-approved for a mortgage or understanding the costs involved in buying out your wife's share of the house?
+
+Trying the financial health tool
+
+session = FinHealthAgentSession(agent)
+session.ask("""
+    Hi, I'm Bob. I'm 35 years old and have two children aged 5 and 7.
+    My wife wants a divorce, and I'm worried about my financial situation.
+    Can you help me figure out how I'm doing?
+""")
+     
+Started session 029231...
+Tools used: ['retrieve_ingnl_information', 'retrieve_nibudnl_information']
+
+Hi Bob, I understand you're going through a tough time with the divorce and are concerned about your finances. That's completely understandable. Many practical things need to be arranged during a divorce, such as moving and dividing the property. It also has consequences for the mortgage and pension. These matters must be divided among themselves. There may be joint loans or insurance policies.
+
+To get a clearer picture, could you share some details about your current financial situation? I'm thinking about things like your monthly income, expenses, savings, and any debts you might have. This will help me assess your situation and offer some tailored advice.
+
+
+session.ask("I have about 2400 in income per month, 1000 euro in savings, and about 2300 in expenses every month.")
+     
+Tools used: ['financial_health_tool']
+
+Thanks for sharing that information, Bob. Based on what you've told me, it looks like your expenses are quite high compared to your income, and your savings are limited. This puts you in a "Poor" financial health status.
+
+The Nibud has a tool called 'Personal Budget Advice' that could help you get a clear overview of your income and expenses. It also shows how you're doing compared to others. Would you like to explore ways to reduce your expenses or increase your income?
+
+
+session.ask("Ok, my main worry is that I really want to stay in the house with the kids.")
+     
+Tools used: ['retrieve_ingnl_information']
+
+I understand that's a priority for you, Bob. Staying in the house can provide stability for your children during this transition.
+
+To assess whether this is feasible, we need to look at your mortgage and housing costs. Do you know how much is left on your mortgage, and what the monthly payments are? Also, consider other housing- related expenses like property taxes, insurance, and maintenance.
+
+It's important to determine if you can realistically afford the house on your income alone. If not, there might be options like refinancing the mortgage or exploring government assistance programs to help with housing costs.
+
+
+session.ask("I think there's about 200k left on the mortgage. We're paying 1000 euro per month right now.")
+     
+Tools used: []
+
+Okay, so you have about €200,000 left on the mortgage with monthly payments of €1,000.
+
+One option to consider is refinancing your mortgage. This could potentially lower your monthly payments, making it more affordable for you to stay in the house. Another thing to consider is to see if you're eligible for any government assistance programs to help with housing costs.
+
+Would you like me to help you explore those options?
+
+
+session.ask("Wouldn't I have to buy out my wife's part of the house that we already repaid?")
+     
+Tools used: []
+
+That's a very important point to consider. Yes, if you want to keep the house, you'll likely need to buy out your wife's share of the equity that you've already paid off. This is often a significant expense in a divorce.
+
+To determine how much that would be, you'll need to get an appraisal of the house to determine its current market value. Then, you'll need to calculate the total equity in the house (market value minus the remaining mortgage balance). Your wife would generally be entitled to half of that equity.
+
+Have you already discussed this with your wife, or do you have a lawyer assisting you with the divorce proceedings?
+
+
+session.ask("No, I don't have a lawyer yet.")
+     
+Tools used: []
+
+Okay, it might be a good idea to consult with a lawyer. They can help you understand your rights and obligations regarding the house and other assets in the divorce. They can also guide you through the legal process of dividing property and negotiating a settlement with your wife.
+
+Additionally, the Nibud has a 'Geldplan Scheiden' (Money Plan Divorce) tool that provides insight into your finances now and how they'll change after the divorce. It helps you prepare for your new situation and ensure everything is taken care of.
+
+Would you like me to help you find a lawyer or provide you with more information about the 'Geldplan Scheiden' tool?
+
+
+session.ask("Can you get me a link to the Geldplan scheiden tool?")
+     
+Tools used: ['retrieve_nibudnl_information']
+
+You can find the Geldplan Scheiden tool on the Nibud website. Just go to nibud.nl and search for "Geldplan Scheiden" in the search bar. You should find the tool and be able to start working through it step by step.
+
+I know this is a lot to take in, Bob. Would you like to take a break, or is there anything else I can help you with right now?
+
+
+
+     
